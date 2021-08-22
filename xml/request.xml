@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <request id="775">
-     <from>2248585019</from>
-     <to>1961776643</to>
+     <from type="user">2248585019</from>
+     <to type="user">1961776643</to>
      <verify>hi~ my name is Romeo</verify>
      <processed>null</processed>
      <time>20210713</time>

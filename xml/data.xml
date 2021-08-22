@@ -8,13 +8,6 @@
                 <signature>long live the ideal</signature>
         </user>
         <friendlist>
-                <user id="2248585019">
-                        <name>Page</name>
-                        <sex>true</sex>
-                        <avatar>./image/user_avatar/1.jpg</avatar>
-                        <birth>20000101</birth>
-                        <signature>long live the ideal</signature>
-                </user>
                 <user id="18273984002">
                         <name>Flower</name>
                         <sex>false</sex>
@@ -47,7 +40,7 @@
         <grouplist>
                 <group id="216559214">
                         <name>Two girl and one dog</name>
-                        <avatar>./image/user_avatar/1.jpg</avatar>
+                        <avatar>./image/group_avatar/1.jpg</avatar>
                         <time>20210629</time>
                         <introduction></introduction>
                         <owner>2248585019</owner>
@@ -81,15 +74,15 @@
         </groupmemberslist>
         <requestlist>
                 <request id="775">
-                        <from>2248585019</from>
-                        <to>1077546033</to>
+                        <from type="user">2248585019</from>
+                        <to type="group">1077546033</to>
                         <verify>hi~ my name is Romeo</verify>
                         <status>null</status>
                         <time>20210704</time>
                 </request>
                 <request id="1342">
-                        <from>3532444733</from>
-                        <to>2248585019</to>
+                        <from type="user">3532444733</from>
+                        <to type="user">2248585019</to>
                         <verify></verify>
                         <status>false</status>
                         <time>20210812</time>
@@ -97,37 +90,37 @@
         </requestlist>
         <messagelist>
                 <group id="216559214">
-                        <message id="1278">
+                        <message id="1278" type="text">
                                 <from>2248585019</from>
                                 <to>216559214</to>
                                 <time>20010713113245</time>
-                                <text>So boring~ so boring~</text>
+                                <data>So boring~ so boring~</data>
                         </message>
-                        <message id="1279">
+                        <message id="1279" type="text">
                                 <from>2248585019</from>
                                 <to>216559214</to>
                                 <time>20010713113250</time>
-                                <text>I want to go out to play~</text>
+                                <data>I want to go out to play~</data>
                         </message>
-                        <message id="1280">
+                        <message id="1280" type="text">
                                 <from>1961776643</from>
                                 <to>216559214</to>
                                 <time>20010713113311</time>
-                                <text>shut up! Stupid!!</text>
+                                <data>shut up! Stupid!!</data>
                         </message>
                 </group>
-                <user id="2248585019">
+                <user id="2248585019" type="text">
                         <message id="1278">
                                 <from>2248585019</from>
                                 <to>1961776643</to>
                                 <time>20010713113412</time>
-                                <text>Why are you scolding me?</text>
+                                <data>Why are you scolding me?</data>
                         </message>
-                        <message id="1279">
+                        <message id="1279" type="text">
                                 <from>1961776643</from>
                                 <to>2248585019</to>
                                 <time>20010713113437</time>
-                                <text>Why not</text>
+                                <data>Why not</data>
                         </message>
                 </user>
         </messagelist>
