@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<qq>
+        <user id="2248585019">
+                <name>Page</name>
+                <sex>true</sex>
+                <avatar>./image/user_avatar/1.jpg</avatar>
+                <birth>20000101</birth>
+                <signature>long live the ideal</signature>
+        </user>
+        <friendlist>
+                <user id="2248585019">
+                        <name>Page</name>
+                        <sex>true</sex>
+                        <avatar>./image/user_avatar/1.jpg</avatar>
+                        <birth>20000101</birth>
+                        <signature>long live the ideal</signature>
+                </user>
+                <user id="18273984002">
+                        <name>Flower</name>
+                        <sex>false</sex>
+                        <avatar>./image/user_avatar/2.jpg</avatar>
+                        <birth>20010430</birth>
+                        <signature>one day, I watched the sunset forty-four times</signature>
+                </user>
+                <user id="1961776643">
+                        <name>Grass</name>
+                        <sex>false</sex>
+                        <avatar>./image/user_avatar/3.jpg</avatar>
+                        <birth>20010430</birth>
+                        <signature>happy every day</signature>
+                </user>
+                <user id="1132769074">
+                        <name>BigClever</name>
+                        <sex>true</sex>
+                        <avatar>./image/user_avatar/4.jpg</avatar>
+                        <birth>20011201</birth>
+                        <signature>we will meet in a place where there is no darkness</signature>
+                </user>
+                <user id="1094311033">
+                        <name>BigWeird</name>
+                        <sex>false</sex>
+                        <avatar>./image/user_avatar/5.jpg</avatar>
+                        <birth>20010621</birth>
+                        <signature>eyes full of stars</signature>
+                </user>
+        </friendlist>
+        <grouplist>
+                <group id="216559214">
+                        <name>Two girl and one dog</name>
+                        <avatar>./image/user_avatar/1.jpg</avatar>
+                        <time>20210629</time>
+                        <introduction></introduction>
+                        <owner>2248585019</owner>
+                        <number>3</number>
+                </group>
+        </grouplist>
+        <groupmemberslist>
+                <group id="216559214">
+                        <user id="2248585019">
+                                <name>Page</name>
+                                <sex>true</sex>
+                                <avatar>./image/user_avatar/1.jpg</avatar>
+                                <birth>20000101</birth>
+                                <signature>long live the ideal</signature>
+                        </user>
+                        <user id="1961776643">
+                                <name>Grass</name>
+                                <sex>false</sex>
+                                <avatar>./image/user_avatar/3.jpg</avatar>
+                                <birth>20010430</birth>
+                                <signature>happy every day</signature>
+                        </user>
+                        <user id="1094311033">
+                                <name>BigWeird</name>
+                                <sex>false</sex>
+                                <avatar>./image/user_avatar/5.jpg</avatar>
+                                <birth>20010621</birth>
+                                <signature>eyes full of stars</signature>
+                        </user>
+                </group>
+        </groupmemberslist>
+        <requestlist>
+                <request id="775">
+                        <from>2248585019</from>
+                        <to>1077546033</to>
+                        <verify>hi~ my name is Romeo</verify>
+                        <status>null</status>
+                        <time>20210704</time>
+                </request>
+                <request id="1342">
+                        <from>3532444733</from>
+                        <to>2248585019</to>
+                        <verify></verify>
+                        <status>false</status>
+                        <time>20210812</time>
+                </request>
+        </requestlist>
+        <messagelist>
+                <group id="216559214">
+                        <message id="1278">
+                                <from>2248585019</from>
+                                <to>216559214</to>
+                                <time>20010713113245</time>
+                                <text>So boring~ so boring~</text>
+                        </message>
+                        <message id="1279">
+                                <from>2248585019</from>
+                                <to>216559214</to>
+                                <time>20010713113250</time>
+                                <text>I want to go out to play~</text>
+                        </message>
+                        <message id="1280">
+                                <from>1961776643</from>
+                                <to>216559214</to>
+                                <time>20010713113311</time>
+                                <text>shut up! Stupid!!</text>
+                        </message>
+                </group>
+                <user id="2248585019">
+                        <message id="1278">
+                                <from>2248585019</from>
+                                <to>1961776643</to>
+                                <time>20010713113412</time>
+                                <text>Why are you scolding me?</text>
+                        </message>
+                        <message id="1279">
+                                <from>1961776643</from>
+                                <to>2248585019</to>
+                                <time>20010713113437</time>
+                                <text>Why not</text>
+                        </message>
+                </user>
+        </messagelist>
+</qq>
