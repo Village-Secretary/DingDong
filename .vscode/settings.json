@@ -53,7 +53,8 @@
         "xlocmes": "cpp",
         "list": "cpp",
         "map": "cpp",
-        "xtree": "cpp"
+        "xtree": "cpp",
+        "fstream": "cpp"
     },
     "files.autoGuessEncoding": true
     

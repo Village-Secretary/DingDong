@@ -110,7 +110,7 @@ string UserData::toXMLString(const UserData & user, int level)
 
 	xml += str_level + "<user id=\"" + string(user._user_id) + "\">\n";
 	xml += str_level + "\t<name>" + string(user._user_name) + "</name>\n";
-	xml += str_level + "\t<sex>" + sexConversionToString(user._user_sex) + "</sex>\n";
+	xml += str_level + "\t<sex>" + userSexToStr(user._user_sex) + "</sex>\n";
 	xml += str_level + "\t<avatar>" + string(user._user_avatar) + "</avatar>\n";
 	xml += str_level + "\t<birth>" + to_string(user._user_birth) + "</birth>\n";
 	xml += str_level + "\t<signature>" + string(user._user_signature) + "</signature>\n";
@@ -124,7 +124,7 @@ UserData UserData::toUserData(const xml_node & node)
 {
 	string id = node.attribute("id").value();
 	string name = node.child_value("name");
-	USER_SEX sex = judgingSex(node.child_value("sex"));
+	USER_SEX sex = strToUserSex(node.child_value("sex"));
 	string avatar = node.child_value("avatar");
 	uint32_t birth = stoi(node.child_value("birth"));
 	string signature = node.child_value("signature");
@@ -248,10 +248,10 @@ string RequestData::toXMLString(const RequestData & request, int level)
 	string xml, str_level = setLevel(level);
 
 	xml += str_level + "<request id=\"" + to_string(request._request_id) + "\">\n";
-	xml += str_level + "\t<from type=\"" + ID::idTypeConversionToString(request._from_id.retIdType()) + "\">" + string(request._from_id.retId()) + "</from>\n";
-	xml += str_level + "\t<to type=\"" + ID::idTypeConversionToString(request._to_id.retIdType()) + "\">" + string(request._to_id.retId()) + "</to>\n";
+	xml += str_level + "\t<from type=\"" + ID::idTypeToStr(request._from_id.retIdType()) + "\">" + string(request._from_id.retId()) + "</from>\n";
+	xml += str_level + "\t<to type=\"" + ID::idTypeToStr(request._to_id.retIdType()) + "\">" + string(request._to_id.retId()) + "</to>\n";
 	xml += str_level + "\t<verify>" + string(request._verify_message) + "</verify>\n";
-	xml += str_level + "\t<status>" + processConversionToString(request._request_status) + "</status>\n";
+	xml += str_level + "\t<status>" + requestStatusToStr(request._request_status) + "</status>\n";
 	xml += str_level + "\t<time>" + to_string(request._request_time) + "</time>\n";
 	xml += str_level + "</request>\n";
 
@@ -262,10 +262,10 @@ string RequestData::toXMLString(const RequestData & request, int level)
 RequestData RequestData::toRequestData(const xml_node & node)
 {
 	uint32_t id = stoi(node.attribute("id").value());
-	ID from = ID(node.child_value("from"), ID::judgingIdType(node.child("from").attribute("type").value()));
-	ID to = ID(node.child_value("to"), ID::judgingIdType(node.child("to").attribute("type").value()));
+	ID from = ID(node.child_value("from"), ID::strToIdType(node.child("from").attribute("type").value()));
+	ID to = ID(node.child_value("to"), ID::strToIdType(node.child("to").attribute("type").value()));
 	string verify = node.child_value("verify");
-	REQUEST_STATUS status = judgingProcess(node.child_value("status"));
+	REQUEST_STATUS status = strToRequestStatus(node.child_value("status"));
 	uint32_t time = stoi(node.child_value("time"));
 
 	return RequestData(id, from, to, verify.c_str(), status, time);
@@ -315,7 +315,7 @@ std::string MessageData::toXMLString(const MessageData& message, int level)
 {
 	string xml, str_level = setLevel(level);
 
-	xml += str_level + "<message id=\"" + to_string(message._message_id) + " type=" + dataTypeConversionToString(message._message_type) + "\">\n";
+	xml += str_level + "<message id=\"" + to_string(message._message_id) + " type=" + dataTypeToStr(message._message_type) + "\">\n";
 	xml += str_level + "\t<from>" + string(message._from_id) + "</from>\n";
 	xml += str_level + "\t<to>" + string(message._to_id) + "</to>\n";
 	xml += str_level + "\t<time>" + to_string(message._send_time) + "</time>\n";
@@ -329,7 +329,7 @@ std::string MessageData::toXMLString(const MessageData& message, int level)
 MessageData MessageData::toMessageData(const xml_node & node)
 {
 	uint32_t id = stoi(node.attribute("id").value());
-	MessageData::DATA_TYPE type = judgingDataType(node.attribute("type").value());
+	MessageData::DATA_TYPE type = strToDataType(node.attribute("type").value());
 	string from = node.child_value("from");
 	string to = node.child_value("to");
 	uint64_t time = stoll(node.child_value("time"));

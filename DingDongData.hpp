@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 
-constexpr uint32_t ID_MAX = 12;
+constexpr uint32_t ID_MAX = 11 + 1;
 constexpr uint32_t USER_NAME_MAX = 35;
 constexpr uint32_t GROUP_NAME_MAX = 50;
 constexpr uint32_t USER_AVATAR_MAX = 120;
@@ -58,18 +58,18 @@ public:
 	inline void setId(const ID_TYPE& type) { _type = type; };
 
 	// 根据字符串判断ID类型
-	static inline ID_TYPE judgingIdType(const std::string& str)
+	static inline ID_TYPE strToIdType(const std::string& str)
 	{
 		if (str == "user") return ID_TYPE::user;
-		else if (str == "group") return ID_TYPE::group;
+		if (str == "group") return ID_TYPE::group;
 	};
 
 	// 根据ID类型返回对应字符串
-	static inline std::string idTypeConversionToString(const ID_TYPE& type)
+	static inline std::string idTypeToStr(const ID_TYPE& type)
 	{
 		if (type == ID_TYPE::user) return "user";
-		else if (type == ID_TYPE::group) return "group";
-		else return "null";
+		if (type == ID_TYPE::group) return "group";
+		return "null";
 	}
 
 private:
@@ -150,6 +150,22 @@ public:
 	// XML解析转换为UserData类型
 	static UserData toUserData(const pugi::xml_node & node);
 
+	// 根据字符串判断性别
+	static inline USER_SEX strToUserSex(const std::string& str)
+	{
+		if (str == "false") return USER_SEX::woman;
+		if (str == "true") return USER_SEX::man;
+		return USER_SEX::null;
+	};
+
+	// 根据性别返回对应字符串
+	static inline std::string userSexToStr(const USER_SEX& sex)
+	{
+		if (sex == USER_SEX::woman) return "false";
+		if (sex == USER_SEX::man) return "true";
+		return "null";
+	}
+
 private:
 
 	char _user_id[ID_MAX];                          // 账号
@@ -161,22 +177,6 @@ private:
 
 	// 设置[账号]
 	inline void setId(const char * id) { std::strncpy(_user_id, id, sizeof(_user_id)); };
-
-	// 根据字符串判断性别
-	static inline USER_SEX judgingSex(const std::string& str)
-	{
-		if (str == "false") return USER_SEX::woman;
-		else if (str == "true") return USER_SEX::man;
-		else return USER_SEX::null;
-	};
-
-	// 根据性别返回对应字符串
-	static inline std::string sexConversionToString(const USER_SEX& sex)
-	{
-		if (sex == USER_SEX::woman) return "false";
-		else if (sex == USER_SEX::man) return "true";
-		else return "null";
-	}
 
 };
 
@@ -337,7 +337,7 @@ public:
 	 *      <from type="user">2248585019</from>
 	 *      <to type="user">1961776643</to>
 	 *      <verify>hi~ my name is Romeo</verify>
-	 *      <processed>null</processed>
+	 *      <status>null</status>
 	 *      <time>20210713</time>
 	 * </request>
 	 ****************************************************************/
@@ -345,6 +345,22 @@ public:
 
 	// XML解析转换为RequestData类型
 	static RequestData toRequestData(const pugi::xml_node & node);
+
+	// 根据字符串判断是否处理
+	static inline REQUEST_STATUS strToRequestStatus(const std::string& str)
+	{
+		if (str == "null") return REQUEST_STATUS::untreated;
+		if (str == "true") return REQUEST_STATUS::agree;
+		if (str == "false") return REQUEST_STATUS::disagree;
+	};
+
+	// 根据处理状态返回对应字符串
+	static inline std::string requestStatusToStr(const REQUEST_STATUS& status)
+	{
+		if (status == REQUEST_STATUS::disagree) return "false";
+		if (status == REQUEST_STATUS::agree) return "true";
+		if (status == REQUEST_STATUS::untreated) return "null";
+	}
 
 private:
 
@@ -354,22 +370,6 @@ private:
 	char _verify_message[VERIFY_MAX];   // 验证信息
 	REQUEST_STATUS _request_status;     // 是否处理
 	uint32_t _request_time;             // 发送时间
-
-	// 根据字符串判断是否处理
-	static inline REQUEST_STATUS judgingProcess(const std::string& str)
-	{
-		if (str == "null") return REQUEST_STATUS::untreated;
-		else if (str == "true") return REQUEST_STATUS::agree;
-		else if (str == "false") return REQUEST_STATUS::disagree;
-	};
-
-	// 根据处理状态返回对应字符串
-	static inline std::string processConversionToString(const REQUEST_STATUS& status)
-	{
-		if (status == REQUEST_STATUS::disagree) return "false";
-		else if (status == REQUEST_STATUS::agree) return "true";
-		else if (status == REQUEST_STATUS::untreated) return "null";
-	}
 
 };
 
@@ -423,9 +423,9 @@ public:
 	inline void setToId(const char * id) { strncpy(_to_id, id, sizeof(_to_id)); };
 
 	// 返回[发送时间][禁止修改]
-	inline uint32_t retTime(void) const { return _send_time; };
+	inline uint64_t retTime(void) const { return _send_time; };
 	// 设置[发送时间]
-	inline void setTime(const uint32_t& time) { _send_time = time; };
+	inline void setTime(const uint64_t& time) { _send_time = time; };
 
 	// 返回[发送文本][禁止修改]
 	inline const char * retData(void) const { return _message_data; };
@@ -455,6 +455,21 @@ public:
 	// XML解析转换为UserData类型
 	static MessageData toMessageData(const pugi::xml_node & node);
 
+	// 根据字符串判断消息类型
+	static inline DATA_TYPE strToDataType(const std::string& str)
+	{
+		if (str == "text") return DATA_TYPE::text;
+		if (str == "image") return DATA_TYPE::image;
+
+	};
+
+	// 根据性别返回对应字符串
+	static inline std::string dataTypeToStr(const DATA_TYPE& sex)
+	{
+		if (sex == DATA_TYPE::text) return "text";
+		if (sex == DATA_TYPE::image) return "image";
+	}
+
 private:
 
 	uint32_t _message_id;                           // 消息id
@@ -463,21 +478,6 @@ private:
 	char _to_id[ID_MAX];                            // 接受账号
 	uint64_t _send_time;                            // 发送时间
 	char _message_data[MESSAGE_DATA_MAX];           // 发送文本
-
-	// 根据字符串判断消息类型
-	static inline DATA_TYPE judgingDataType(const std::string& str)
-	{
-		if (str == "text") return DATA_TYPE::text;
-		else if (str == "image") return DATA_TYPE::image;
-
-	};
-
-	// 根据性别返回对应字符串
-	static inline std::string dataTypeConversionToString(const DATA_TYPE& sex)
-	{
-		if (sex == DATA_TYPE::text) return "text";
-		else if (sex == DATA_TYPE::image) return "image";
-	}
 
 };
 

@@ -1,20 +1,39 @@
 // This is a test
-#define __DEBUG_USER
-#define __DEBUG_GROUP
-#define __DEBUG_REQUEST
-#define __DEBUG_MESSAGE
-#define __DEBUG_DATA
-#define __DEBUG_DATA_FUNCTION
-#define __DEBUG_DATA_IMAGE
+// #define __DEBUG_USER
+// #define __DEBUG_GROUP
+// #define __DEBUG_REQUEST
+// #define __DEBUG_MESSAGE
+// #define __DEBUG_DATA
+// #define __DEBUG_DATA_FUNCTION
+// #define __DEBUG_DATA_IMAGE
+#define __DEBUG_TRANSFERDATA_SEND
 
+// 测试DingDongData的数据增删查改功能，这里为打开DingDongData类的Show函数
 #ifdef __DEBUG_DATA_FUNCTION
 
 #define __DINGDONG_DATA_DEBUG
 
 #endif
 
+
 #include "DingDongData.hpp"
 #include <iostream>
+
+// 测速客户端和服务器之间的转发协议
+#ifdef __DEBUG_TRANSFERDATA_SEND
+
+#include <winsock2.h>
+
+#pragma comment(lib,"ws2_32.lib")
+
+void initialization();              // 初始化Winsock2.2版本
+
+#define __DEBUG_TRANSFERDATA_SEND_SERVER			// 测试服务器
+// #define __DEBUG_TRANSFERDATA_SEND_CLIENT			// 测试客户端
+
+
+#endif
+
 
 int main(void)
 {
@@ -166,6 +185,7 @@ int main(void)
 
 #endif
 
+	// 测试DingDongData的图片管理功能
 #ifdef __DEBUG_DATA_IMAGE
 
 	pugi::xml_document doc_image;
@@ -178,5 +198,120 @@ int main(void)
 
 #endif
 
+	// 测速客户端和服务器之间的转发协议
+#ifdef __DEBUG_TRANSFERDATA_SEND
+
+	using std::cout;
+	using std::endl;
+
+	// 初始化Winsock2.2版本
+	initialization();
+
+	//定义服务端套接字，接受请求套接字	
+	SOCKET s_server;
+
+	//服务端地址客户端地址	
+	sockaddr_in server_addr;
+
+	//填充服务端信息	
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+	server_addr.sin_port = htons(9090);
+
+	//创建套接字	
+	s_server = socket(AF_INET, SOCK_STREAM, 0);
+
+#ifdef __DEBUG_TRANSFERDATA_SEND_SERVER
+
+	// 连接套接字
+	SOCKET s_accept;
+
+	// 连接客户端地址信息
+	sockaddr_in accept_addr;
+
+	// 绑定本机地址和端口等信息给套接字
+	if (bind(s_server, (sockaddr *)&server_addr, sizeof(sockaddr)) == SOCKET_ERROR)
+	{
+		cout << "bind failed!" << endl;
+		WSACleanup();
+	}
+	else
+		cout << "bind succeeded!" << endl;
+
+	//设置套接字为监听状态	
+	if (listen(s_server, SOMAXCONN) < 0)
+	{
+		cout << "listen failed!" << endl;
+		WSACleanup();
+	}
+	else
+		cout << "listen succeeded!" << endl;
+
+	cout << "The server is listening for connections, please wait..." << endl;	//接受连接请求	
+
+	int len = sizeof(sockaddr);
+
+	// 当系统空闲时，将接受客户机的连接请求，获得连接信息，创建新的套接字，并返回该套接字的文件描述符
+	s_accept = accept(s_server, (sockaddr *)&accept_addr, &len);
+	if (s_accept == SOCKET_ERROR)
+	{
+		cout << "connect failed" << endl;
+		WSACleanup();
+		return 0;
+	}
+
+	cout << "连接建立，准备接受数据" << endl;	//接收数据	
+
+#endif
+
+#ifdef __DEBUG_TRANSFERDATA_SEND_CLIENT
+
+	// 根据server_addr所提供的信息，向一个服务器发送连接请求
+	if (connect(s_server, (SOCKADDR *)&server_addr, sizeof(SOCKADDR)) == SOCKET_ERROR)
+	{
+		cout << "connect to server failed" << endl;
+		WSACleanup();
+	}
+	else
+	{
+		cout << "connect to server succeeded" << endl;
+	}
+
+#endif
+
+
+#endif
+
 	return 0;
 }
+
+// 测速客户端和服务器之间的转发协议，这里显示定义的初始化WinSock函数
+#ifdef __DEBUG_TRANSFERDATA_SEND
+
+void initialization() {
+
+	using std::cout;
+	using std::endl;
+
+	//初始化套接字库	
+	WORD w_req = MAKEWORD(2, 2);//版本号	
+	WSADATA wsadata;
+	int err;
+
+	err = WSAStartup(w_req, &wsadata);
+	if (err != 0)
+		cout << "initialization socket failed" << endl;
+	else
+		cout << "initialization socket succeeded" << endl;
+
+	// //检测版本号	
+	// if (LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wHighVersion) != 2)
+	// {
+	// 	cout << "套接字库版本号不符！" << endl;
+	// 	WSACleanup();
+	// }
+	// else
+	// 	cout << "套接字库版本正确！" << endl;
+}
+
+#endif
