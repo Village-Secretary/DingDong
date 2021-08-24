@@ -4,12 +4,12 @@
 #include "pugixml.hpp"
 #include "DingDongData.hpp"
 
-constexpr uint32_t Header_FROM = 6;
-constexpr uint32_t Header_TO = 4;
-constexpr uint32_t Header_LENGTH = 8;
+constexpr uint32_t HEADER_FROM = 6;
+constexpr uint32_t HEADER_TO = 4;
+constexpr uint32_t HEADER_LENGTH = 8;
 constexpr uint32_t Header_ID_MAX = 11;
-constexpr uint32_t Header_LENGTH_MAX = 12;
-constexpr uint32_t Header_MAX = 56;
+constexpr uint32_t HEADER_LENGTH_MAX = 12;
+constexpr uint32_t HEADER_MAX = 56;
 
 // 返回当前时间[uint64_t类型]
 uint64_t retNowTime(const bool& is_day = false);
@@ -18,31 +18,31 @@ uint64_t retNowTime(const bool& is_day = false);
 enum TRANSFER_STATUS { request = 0, reply = 5 };
 inline std::string transferStatusToStr(const TRANSFER_STATUS& type)
 {
-    if (type == TRANSFER_STATUS::request) return "request";
-    if (type == TRANSFER_STATUS::reply) return "reply";
+	if (type == TRANSFER_STATUS::request) return "request";
+	if (type == TRANSFER_STATUS::reply) return "reply";
 }
 inline TRANSFER_STATUS strToTransferStatus(const std::string& str)
 {
-    if (str == "request") return TRANSFER_STATUS::request;
-    if (str == "reply") return TRANSFER_STATUS::reply;
+	if (str == "request") return TRANSFER_STATUS::request;
+	if (str == "reply") return TRANSFER_STATUS::reply;
 }
 
 
 // 传输类型
-enum TRANSFER_TYPE { login = 0, synchr = 5, send = 10, add = 15 };
+enum TRANSFER_TYPE { _login = 0, _synchr = 5, _send = 10, _add = 15 };
 inline std::string transferTypeToStr(const TRANSFER_TYPE& type)
 {
-    if (type == TRANSFER_TYPE::login) return "login";
-    if (type == TRANSFER_TYPE::synchr) return "synchr";
-    if (type == TRANSFER_TYPE::send) return "send";
-    if (type == TRANSFER_TYPE::add) return "add";
+	if (type == TRANSFER_TYPE::_login) return "login";
+	if (type == TRANSFER_TYPE::_synchr) return "synchr";
+	if (type == TRANSFER_TYPE::_send) return "send";
+	if (type == TRANSFER_TYPE::_add) return "add";
 }
 inline TRANSFER_TYPE strToTransferType(const std::string& str)
 {
-    if (str == "login") return TRANSFER_TYPE::login;
-    if (str == "synchr") return TRANSFER_TYPE::synchr;
-    if (str == "send") return TRANSFER_TYPE::send;
-    if (str == "add") return TRANSFER_TYPE::add;
+	if (str == "login") return TRANSFER_TYPE::_login;
+	if (str == "synchr") return TRANSFER_TYPE::_synchr;
+	if (str == "send") return TRANSFER_TYPE::_send;
+	if (str == "add") return TRANSFER_TYPE::_add;
 }
 
 

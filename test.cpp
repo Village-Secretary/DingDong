@@ -17,6 +17,7 @@
 
 
 #include "DingDongData.hpp"
+#include "TransferData.hpp"
 #include <iostream>
 
 // 测速客户端和服务器之间的转发协议
@@ -28,8 +29,10 @@
 
 void initialization();              // 初始化Winsock2.2版本
 
+constexpr uint32_t BUFF_MAX = 1024;
+
 #define __DEBUG_TRANSFERDATA_SEND_SERVER			// 测试服务器
-// #define __DEBUG_TRANSFERDATA_SEND_CLIENT			// 测试客户端
+//#define __DEBUG_TRANSFERDATA_SEND_CLIENT			// 测试客户端
 
 
 #endif
@@ -203,6 +206,8 @@ int main(void)
 
 	using std::cout;
 	using std::endl;
+	using std::cin;
+	using std::flush;
 
 	// 初始化Winsock2.2版本
 	initialization();
@@ -215,7 +220,16 @@ int main(void)
 
 	//填充服务端信息	
 	server_addr.sin_family = AF_INET;
+#ifdef __DEBUG_TRANSFERDATA_SEND_SERVER
+
 	server_addr.sin_addr.S_un.S_addr = htonl(INADDR_ANY);
+
+#endif
+#ifdef __DEBUG_TRANSFERDATA_SEND_CLIENT
+
+	server_addr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+
+#endif
 	server_addr.sin_port = htons(9090);
 
 	//创建套接字	
@@ -262,6 +276,54 @@ int main(void)
 
 	cout << "连接建立，准备接受数据" << endl;	//接收数据	
 
+	std::string from, to;
+	uint64_t data_len = 0;
+	uint64_t difference = 0;			// count为计数器
+
+	char recv_buf[BUFF_MAX]{ 0 };
+	//char recv_buf
+	while (1)
+	{
+		// 用于接受数据
+		int recv_len = recv(s_accept, recv_buf, BUFF_MAX, 0);
+
+		if (recv_len < 0)
+			cout << "recv failed! error code: " << WSAGetLastError() << endl;
+		else if (recv_len == 0)
+			cout << "no data received!";
+		else if (recv > 0)
+		{
+			// 如果读取的数据比差量大，则继续读取接受客户端数据，如果比差量小，则进入
+			if (difference < recv_len)
+			{
+				const char * p = recv_buf;
+
+				while ((p + HEADER_MAX - recv_buf) < recv_len)
+				{
+					p = ParseMessageHeader(from, to, data_len, p);
+					cout << "from: " << from << endl
+						<< "to: " << to << endl
+						<< "length: " << data_len << endl;
+
+					// 假装读取数据
+					p += data_len;					// 缓存够，根据data_len长度一截儿一截儿读取
+				}
+
+				// 缓存不够，记录差多少，然后一次性读取完
+				difference = data_len - (recv_len - (p - recv_buf));			// 记录差多少
+				// 并存下来
+			}
+			else
+			{
+				// 假装读取此次数据
+				difference -= recv_len;
+			}
+
+		}
+	}
+
+	closesocket(s_accept);
+
 #endif
 
 #ifdef __DEBUG_TRANSFERDATA_SEND_CLIENT
@@ -277,9 +339,31 @@ int main(void)
 		cout << "connect to server succeeded" << endl;
 	}
 
+	int num = 0;
+	cout << "enter a number to send number: " << flush;
+	cin >> num;
+
+	for (int i = 0; i < num; i++)
+	{
+		std::string data = sendData(retNowTime(), "fwahifhwaoifwoaifhawoihwoahohwaffwaofgowafoawjfg", MessageData::text);
+		std::string message = requestMessage(TRANSFER_TYPE::_send, TRANSFER_STATUS::request, ID("12345678", ID::user), ID("87654321", ID::group), data);
+
+		int send_len = send(s_server, message.c_str(), message.size(), 0);
+		if (send_len < 0)
+			cout << "send failed! error code: " << WSAGetLastError() << endl;
+		else
+			cout << "send succeeded" << "\tsend len: " << send_len << endl;
+	}
+
 #endif
 
+	//关闭套接字	
+	closesocket(s_server);
 
+	//释放dll资源	
+	WSACleanup();
+
+	system("pause");
 #endif
 
 	return 0;
@@ -304,14 +388,14 @@ void initialization() {
 	else
 		cout << "initialization socket succeeded" << endl;
 
-	// //检测版本号	
-	// if (LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wHighVersion) != 2)
-	// {
-	// 	cout << "套接字库版本号不符！" << endl;
-	// 	WSACleanup();
-	// }
-	// else
-	// 	cout << "套接字库版本正确！" << endl;
+	 //检测版本号	
+	 if (LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wHighVersion) != 2)
+	 {
+	 	cout << "socket version failed！" << endl;
+	 	WSACleanup();
+	 }
+	 else
+	 	cout << "Socket version succeeded！" << endl;
 }
 
 #endif
