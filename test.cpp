@@ -6,7 +6,17 @@
 // #define __DEBUG_DATA
 // #define __DEBUG_DATA_FUNCTION
 // #define __DEBUG_DATA_IMAGE
-#define __DEBUG_TRANSFERDATA_SEND
+ //#define __DEBUG_TRANSFERDATA_CREATE_AND_PARSE
+ //#define __DEBUG_TRANSFERDATA_SEND
+
+// 删除
+#define __DEBUG_TEMP
+
+#ifdef __DEBUG_TEMP
+
+#include <fstream>
+
+#endif
 
 // 测试DingDongData的数据增删查改功能，这里为打开DingDongData类的Show函数
 #ifdef __DEBUG_DATA_FUNCTION
@@ -24,6 +34,7 @@
 #ifdef __DEBUG_TRANSFERDATA_SEND
 
 #include <winsock2.h>
+#include <cstdlib>
 
 #pragma comment(lib,"ws2_32.lib")
 
@@ -38,7 +49,7 @@ constexpr uint32_t BUFF_MAX = 1024;
 #endif
 
 
-int main(void)
+uint32_t main(void)
 {
 
 	// 测试UserData类的初始化、XML转UserData、UserData转XML
@@ -201,6 +212,30 @@ int main(void)
 
 #endif
 
+#ifdef __DEBUG_TRANSFERDATA_CREATE_AND_PARSE
+
+	std::string request = requestMessage(TRANSFER_TYPE::_send, TRANSFER_STATUS::request, ID("12345", ID::user), ID("54321", ID::group), "");
+	
+	uint32_t type;
+	auto p = parseTypeHeader(type, request.c_str());
+	if (type != 1)
+		std::cout << "Error" << std::endl;
+
+	std::string from, to, path;
+	uint64_t m_len;
+	p = parseMessageHeader(from, to, m_len, p);
+	std::cout << "from: " << from << " to: " << to << " len: " << m_len << std::endl;
+
+	request = requestImage("54321", "12345", "./image/user_avatar/333.jpg");
+	p = parseTypeHeader(type, request.c_str());
+	if (type != 1)
+		std::cout << "Error" << std::endl;
+	
+	p = parseImageHeader(from, to, path, m_len, p);
+	std::cout << "from: " << from << " to: " << to << " path: " << path << " len: " << m_len << std::endl;
+
+#endif
+
 	// 测速客户端和服务器之间的转发协议
 #ifdef __DEBUG_TRANSFERDATA_SEND
 
@@ -274,51 +309,119 @@ int main(void)
 		return 0;
 	}
 
-	cout << "连接建立，准备接受数据" << endl;	//接收数据	
-
-	std::string from, to;
+	cout << "connection established, ready to receive data..." << endl;	
+	
+	//接收数据
+	std::string from, to, path;
 	uint64_t data_len = 0;
-	uint64_t difference = 0;			// count为计数器
 
-	char recv_buf[BUFF_MAX]{ 0 };
-	//char recv_buf
+	char recv_buff[BUFF_MAX]{ 0 };				// 缓存区：recv函数接受数据的缓存区
+	char temp_buff[HEADER_MESSAGE_MAX]{ 0 };	// 暂存区：主要存储部分表头数据
+	uint32_t temp_len = 0;						// 记录暂存区当前存储数据大小
+	uint32_t temp_data_len = 0;					// 记录在缓存区数据不够一次性读取时，数据包剩余需要读取的大小
+	uint32_t request_type;						// 请求头的类型
+
+	int num = 0;
 	while (1)
 	{
 		// 用于接受数据
-		int recv_len = recv(s_accept, recv_buf, BUFF_MAX, 0);
+		uint32_t recv_len = recv(s_accept, recv_buff, BUFF_MAX, 0);
 
 		if (recv_len < 0)
 			cout << "recv failed! error code: " << WSAGetLastError() << endl;
 		else if (recv_len == 0)
-			cout << "no data received!";
+			;
 		else if (recv > 0)
 		{
-			// 如果读取的数据比差量大，则继续读取接受客户端数据，如果比差量小，则进入
-			if (difference < recv_len)
-			{
-				const char * p = recv_buf;
+			cout << "recv successed! length: " << recv_len << endl;
+			const char * p = recv_buff;
+			const char * recv_end = recv_buff + recv_len;
 
-				while ((p + HEADER_MAX - recv_buf) < recv_len)
+			while (true)
+			{	
+				if (!temp_data_len)
 				{
-					p = ParseMessageHeader(from, to, data_len, p);
-					cout << "from: " << from << endl
-						<< "to: " << to << endl
-						<< "length: " << data_len << endl;
+					// 判断 缓存区 能否还有一个请求头的大小
+					/****************************************************************
+					 * 一开始的判断为：
+					 *
+					 * p + HEADER_MAX > recv_end
+					 *
+					 * 很简单的直接怕判断缓存区现存的数据是否能够再读取一个请求头的数据量，
+					 * 如果够，就直接读取，如果不够，则分为两种情况：
+					 *
+					 * 第一种：刚好p == recv_end,也就是刚好读取完了全部数据，
+					 * 这样就没有剩余的数据了，可以直接退出，然后再接受数据。
+					 *
+					 * 第二种：p < recv_end 但又不够读取一个请求头的数据量，
+					 * 也就是 p + HEADER_MAX > recv_end，这样的话，缓存区
+					 * 只有一部分的请求头数据，剩下的一部分，要等到下一次recv函数接受后才
+					 * 能读取到，所以我们需要暂时存储这部分的数据，这里设置一个暂存区，暂
+					 * 存区大小设置为刚好一个请求头长度就行，然后把剩余数据存储到这个暂存
+					 * 区,当下一次读取时，把这个暂存区数据也算上。
+					 *
+					 * 这里就需要修改判断式为：
+					 *
+					 * p + HEADER_MAX - temp_len > recv_end
+					 ****************************************************************/
+					if (p + HEADER_MESSAGE_MAX - temp_len > recv_end)
+					{
+						// 暂存 缓存区剩余数据，然后退出
+						for (; p < recv_end; ++p, ++temp_len)
+							temp_buff[temp_len] = *p;
 
-					// 假装读取数据
-					p += data_len;					// 缓存够，根据data_len长度一截儿一截儿读取
+						break;
+					}
+
+					// 有一个请求数据包的大小，则一次性读完
+					// 读取请求头 如果暂存区有数据，读取请求头时则一起算上
+					if (temp_len)
+					{
+						// 拷贝recv_buff请求头数据到temp_buff中去
+						strncat(temp_buff, recv_buff, HEADER_MESSAGE_MAX - temp_len);
+
+						auto temp_p = parseTypeHeader(request_type, temp_buff);				// 读取请求类型
+
+						if (request_type == 1)												// 读取请求头数据
+							parseMessageHeader(from, to, data_len, temp_p);					
+						if (request_type == 2)
+							parseImageHeader(from, to, path, data_len, temp_p);
+
+						p += (HEADER_MESSAGE_MAX - temp_len);								// 调整读取位置p
+						temp_len = 0;														// 清零
+						memset(temp_buff, '\0', HEADER_MESSAGE_MAX);						// 数组清零
+					}
+					else
+					{
+						p = parseTypeHeader(request_type, p);								// 读取请求类型
+
+						if (request_type == 1)
+							p = parseMessageHeader(from, to, data_len, p);					// 读取请求头数据
+						if (request_type == 2)
+							parseImageHeader(from, to, path, data_len, p);
+					}
+
+					if (request_type == 1)
+						cout << "[" << ++num << "]" << "  From: " << from << "  To: " << to << "  Length: " << data_len << endl;
+					else if (type == 2)
+						cout << "[" << ++num << "]" << "  From: " << from << "  To: " << to << "  Path: " << path << "  Length: " << data_len << endl;
+
+					temp_data_len = data_len;			// 记录数据包剩余需要读取的大小
 				}
 
-				// 缓存不够，记录差多少，然后一次性读取完
-				difference = data_len - (recv_len - (p - recv_buf));			// 记录差多少
-				// 并存下来
-			}
-			else
-			{
-				// 假装读取此次数据
-				difference -= recv_len;
-			}
+				// 判断 缓存区 能否还有一个请求数据包的大小
+				// 读取 缓存区剩余数据，然后退出
+				if (p + temp_data_len > recv_end)
+				{
+					temp_data_len -= (recv_end - p);	// 记录数据包剩余需要读取的大小
+					p = recv_end;						// [假装读取数据]
 
+					break;
+				}
+
+				p += temp_data_len;				// 有一个请求数据包的大小，则一次性读完
+				temp_data_len = 0;				// 假装读取数据
+			}
 		}
 	}
 
@@ -339,20 +442,22 @@ int main(void)
 		cout << "connect to server succeeded" << endl;
 	}
 
-	int num = 0;
+	uint32_t num = 0;
 	cout << "enter a number to send number: " << flush;
 	cin >> num;
 
-	for (int i = 0; i < num; i++)
+	for (uint32_t i = 0; i < num; i++)
 	{
 		std::string data = sendData(retNowTime(), "fwahifhwaoifwoaifhawoihwoahohwaffwaofgowafoawjfg", MessageData::text);
-		std::string message = requestMessage(TRANSFER_TYPE::_send, TRANSFER_STATUS::request, ID("12345678", ID::user), ID("87654321", ID::group), data);
+		std::string message = requestMessage(TRANSFER_TYPE::_send, TRANSFER_STATUS::request, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group), data);
 
 		int send_len = send(s_server, message.c_str(), message.size(), 0);
 		if (send_len < 0)
 			cout << "send failed! error code: " << WSAGetLastError() << endl;
 		else
 			cout << "send succeeded" << "\tsend len: " << send_len << endl;
+
+		Sleep(1);
 	}
 
 #endif
@@ -365,6 +470,31 @@ int main(void)
 
 	system("pause");
 #endif
+
+
+#ifdef __DEBUG_TEMP
+
+	std::ifstream file_in("C:\\Users\\ZombieProcess\\Desktop\\1.jpg", std::ifstream::binary);
+	if (!file_in)
+		return -1;
+	std::string data;
+	while (file_in)
+	{
+		data.push_back(file_in.get());
+	}
+	file_in.close();
+
+	std::ofstream file_out("C:\\Users\\ZombieProcess\\Desktop\\55.jpg", std::ifstream::binary);
+	if (!file_out)
+		return -1;
+	for (auto p = data.begin(); p != data.end(); p++)
+	{
+		file_out << *p;
+	}
+	file_out.close();
+
+#endif
+
 
 	return 0;
 }
@@ -380,7 +510,7 @@ void initialization() {
 	//初始化套接字库	
 	WORD w_req = MAKEWORD(2, 2);//版本号	
 	WSADATA wsadata;
-	int err;
+	uint32_t err;
 
 	err = WSAStartup(w_req, &wsadata);
 	if (err != 0)
