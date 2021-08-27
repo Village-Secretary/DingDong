@@ -6,21 +6,23 @@
 
 #define NEW_LINE(n) n + 1
 
-constexpr uint32_t HEADER_TYPE = 4 + 2;
-constexpr uint32_t HEADER_FROM = 4 + 2;
-constexpr uint32_t HEADER_TO = 2 + 2;
-constexpr uint32_t HEADER_PATH = 4 + 2;
-constexpr uint32_t HEADER_LENGTH = 6 + 2;
+constexpr uint32_t HEADER_KEY_TYPE = 4 + 2;
+constexpr uint32_t HEADER_KEY_FROM = 4 + 2;
+constexpr uint32_t HEADER_KEY_TO = 2 + 2;
+constexpr uint32_t HEADER_KEY_PATH = 4 + 2;
+constexpr uint32_t HEADER_KEY_LENGTH = 6 + 2;
 
-constexpr uint32_t HEADER_TYPE_MAX = 1;
-constexpr uint32_t HEADER_ID_MAX = 11;
-constexpr uint32_t HEADER_PATH_MAX = USER_AVATAR_MAX;
-constexpr uint32_t HEADER_LENGTH_MAX = 12;
+constexpr uint32_t HEADER_VALUE_TYPE = 1;
+constexpr uint32_t HEADER_VALUE_ID = 11;
+constexpr uint32_t HEADER_VALUE_PATH = USER_AVATAR_MAX;
+constexpr uint32_t HEADER_VALUE_LENGTH = 12;
 
+// 请求头数据大小
+constexpr uint32_t HEADER_TYPE_LENGTH = HEADER_KEY_TYPE + HEADER_VALUE_TYPE + 1;
 // 普通请求头数据大小
-constexpr uint32_t HEADER_MESSAGE_MAX = HEADER_TYPE + HEADER_TYPE_MAX + HEADER_FROM + HEADER_ID_MAX + HEADER_TO + HEADER_ID_MAX + HEADER_LENGTH + HEADER_LENGTH_MAX + NEW_LINE(4);
+constexpr uint32_t HEADER_MESSAGE_LENGTH = HEADER_KEY_FROM + HEADER_VALUE_ID + HEADER_KEY_TO + HEADER_VALUE_ID + HEADER_KEY_LENGTH + HEADER_VALUE_LENGTH + NEW_LINE(3);
 // 图片请求头数据大小
-constexpr uint32_t HEADER_IMAGE_MAX = HEADER_TYPE + HEADER_TYPE_MAX + HEADER_FROM + HEADER_ID_MAX + HEADER_TO + HEADER_ID_MAX + HEADER_LENGTH + HEADER_LENGTH_MAX + HEADER_PATH + HEADER_PATH_MAX + NEW_LINE(5);
+constexpr uint32_t HEADER_IMAGE_LENGTH = HEADER_KEY_FROM + HEADER_VALUE_ID + HEADER_KEY_TO + HEADER_VALUE_ID + HEADER_KEY_LENGTH + HEADER_VALUE_LENGTH + HEADER_KEY_PATH + HEADER_VALUE_PATH + NEW_LINE(4);
 
 
 // 返回当前时间[uint64_t类型]
@@ -106,6 +108,20 @@ std::string requestImage(const char*  from, const char*  to, const char*  path);
 // 返回第一个未读取的位置
 const char * parseImageHeader(std::string& from, std::string& to, std::string& path, uint64_t& len, const char* buff);
 
+#ifdef _WIN32			// win平台
+
+#include <winsock2.h>
+
+#pragma comment(lib,"ws2_32.lib")
+
+void recvDDServer(SOCKET fd, char * buff, int len);
+
+#elif __linux__			// Linux平台
+
+void recvDDServer(int fd, char * buff, int len);
+
+#endif
+
 /****************************************************************
  * 登录请求头
  * from: 2248585019
@@ -126,25 +142,25 @@ const char * parseImageHeader(std::string& from, std::string& to, std::string& p
  * </data>
  ****************************************************************/
 
-/****************************************************************
- * 同步请求
- * from: 2248585019
- * to: 1
- * length: 32
- *
- * <data type="_synchr" status="request" from="client" to="server">
- * </data>
- *
- * 同步返回
- * from: 1
- * to: 2248585019
- * length: 32
- *
- * <data type="_synchr" status="reply" from="server" to="client">
- *      <qq>...
- *      <qq>
- * </data>
- ****************************************************************/
+ /****************************************************************
+  * 同步请求
+  * from: 2248585019
+  * to: 1
+  * length: 32
+  *
+  * <data type="_synchr" status="request" from="client" to="server">
+  * </data>
+  *
+  * 同步返回
+  * from: 1
+  * to: 2248585019
+  * length: 32
+  *
+  * <data type="_synchr" status="reply" from="server" to="client">
+  *      <qq>...
+  *      <qq>
+  * </data>
+  ****************************************************************/
 
 /****************************************************************
  * 转发请求
