@@ -6,39 +6,41 @@
 
 #define NEW_LINE(n) n + 1
 
-constexpr uint32_t HEADER_KEY_TYPE = 4 + 2;
-constexpr uint32_t HEADER_KEY_FROM = 4 + 2;
-constexpr uint32_t HEADER_KEY_TO = 2 + 2;
-constexpr uint32_t HEADER_KEY_PATH = 4 + 2;
-constexpr uint32_t HEADER_KEY_LENGTH = 6 + 2;
+constexpr uint32_t HEADER_KEY_TYPE = 4 + 2;				// 请求头：请求类型大小
+constexpr uint32_t HEADER_KEY_FROM = 4 + 2;				// 请求头：发送方大小
+constexpr uint32_t HEADER_KEY_TO = 2 + 2;				// 请求头：接受方大小
+constexpr uint32_t HEADER_KEY_LENGTH = 6 + 2;			// 请求头：数据包长度大小
 
-constexpr uint32_t HEADER_VALUE_TYPE = 1;
-constexpr uint32_t HEADER_VALUE_ID = 11;
-constexpr uint32_t HEADER_VALUE_PATH = USER_AVATAR_MAX;
-constexpr uint32_t HEADER_VALUE_LENGTH = 12;
+constexpr uint32_t HEADER_VALUE_TYPE = 1;					// 请求头：请求类型的值的大小
+constexpr uint32_t HEADER_VALUE_ID = ID_MAX + 1;			// 请求头：发送和接受方的值的大小
+constexpr uint32_t HEADER_VALUE_LENGTH = 12;				// 请求头：数据包长度的值的大小
 
 // 请求头数据大小
 constexpr uint32_t HEADER_TYPE_LENGTH = HEADER_KEY_TYPE + HEADER_VALUE_TYPE + 1;
 // 普通请求头数据大小
-constexpr uint32_t HEADER_MESSAGE_LENGTH = HEADER_KEY_FROM + HEADER_VALUE_ID + HEADER_KEY_TO + HEADER_VALUE_ID + HEADER_KEY_LENGTH + HEADER_VALUE_LENGTH + NEW_LINE(3);
-// 图片请求头数据大小
-constexpr uint32_t HEADER_IMAGE_LENGTH = HEADER_KEY_FROM + HEADER_VALUE_ID + HEADER_KEY_TO + HEADER_VALUE_ID + HEADER_KEY_LENGTH + HEADER_VALUE_LENGTH + HEADER_KEY_PATH + HEADER_VALUE_PATH + NEW_LINE(4);
+constexpr uint32_t HEADER_ATTRIBUTES_LENGTH = HEADER_KEY_FROM + HEADER_VALUE_ID + HEADER_KEY_TO + HEADER_VALUE_ID + HEADER_KEY_LENGTH + HEADER_VALUE_LENGTH + NEW_LINE(3);
 
+// 图片路径
+constexpr const char * IMAGE_ROOT_DIRECTORY = "\\image\\";
+constexpr const char * IMAGE_USER_AVACTAR = "\\image\\user_avatar\\";
+constexpr const char * IMAGE_GROUP_AVACTAR = "\\image\\group_avatar\\";
+constexpr const char * IMAGE_USER_MESSAGE = "\\image\\user_message\\";
+constexpr const char * IMAGE_GROUP_MESSAGE = "\\image\\group_message\\";
 
 // 返回当前时间[uint64_t类型]
 uint64_t retNowTime(const bool& is_day = false);
 
 // 传输状态
-enum TRANSFER_STATUS { request = 0, reply = 5 };
+enum TRANSFER_STATUS { _request = 0, _reply = 5 };
 inline std::string transferStatusToStr(const TRANSFER_STATUS& type)
 {
-	if (type == TRANSFER_STATUS::request) return "request";
-	if (type == TRANSFER_STATUS::reply) return "reply";
+	if (type == TRANSFER_STATUS::_request) return "request";
+	if (type == TRANSFER_STATUS::_reply) return "reply";
 }
 inline TRANSFER_STATUS strToTransferStatus(const std::string& str)
 {
-	if (str == "request") return TRANSFER_STATUS::request;
-	if (str == "reply") return TRANSFER_STATUS::reply;
+	if (str == "request") return TRANSFER_STATUS::_request;
+	if (str == "reply") return TRANSFER_STATUS::_reply;
 }
 
 // 传输类型
@@ -58,55 +60,112 @@ inline TRANSFER_TYPE strToTransferType(const std::string& str)
 	if (str == "add") return TRANSFER_TYPE::_add;
 }
 
-// 解析请求头Type属性，判断时图片还是文本
-// 返回第一个未读取的位置
-const char * parseTypeHeader(uint32_t& type, const char* buff);
+class DDHeader
+{
 
-// 创建文本请求报文
-/****************************************************************
- * 报文头组成部分
- * |Type:	| 发送类型 | 换行符
- * |From:   | 发送账号 | 换行符
- * |To:     | 接受账号 | 换行符
- * |Length: | 数据长度 | 换行符 × 2
- *
- * 对应的字节为：
- * | 6个字节 |  1个字节 | 1个字节
- * | 6个字节 | 11个字节 | 1个字节
- * | 4个字节 | 11个字节 | 1个字节
- * | 8个字节 | 12个字节 | 2个字节
- * 一共 64 个字节
- *
- * 空缺字节用'#'填充
- ****************************************************************/
-std::string requestMessage(const TRANSFER_TYPE& type, const TRANSFER_STATUS& status, const ID& from, const ID& to, const std::string& t_data);
-// 解析文本请求头的内容
-// 返回第一个未读取的位置
-const char * parseMessageHeader(std::string& from, std::string& to, uint64_t& len, const char* buff);
 
-// 创建图片请求报文
-/****************************************************************
- * 报文头组成部分
- * |Type:	| 发送类型 | 换行符
- * |From:   | 发送账号 | 换行符
- * |To:     | 接受账号 | 换行符
- * |Path:	| 图片路径 | 换行符
- * |Length: | 数据长度 | 换行符 × 2
- *
- * 对应的字节为：
- * | 6个字节 |   1个字节  | 1个字节
- * | 6个字节 |  11个字节  | 1个字节
- * | 4个字节 |  11个字节  | 1个字节
- * | 6个字节 | 120个字节  | 1个字节
- * | 8个字节 |  12个字节  | 2个字节
- * 一共 191 个字节
- *
- * 空缺字节用'#'填充
- ****************************************************************/
-std::string requestImage(const char*  from, const char*  to, const char*  path);
-// 解析文本请求头的内容
-// 返回第一个未读取的位置
-const char * parseImageHeader(std::string& from, std::string& to, std::string& path, uint64_t& len, const char* buff);
+public:
+
+	enum DDHEADER_TYPE { message = 1, image = 2 };
+
+	// 显示默认构造函数
+	DDHeader(void) = default;
+
+	// 列表初始化构造函数
+	DDHeader(const DDHEADER_TYPE& type, const ID& from, const ID& to, const uint64_t& len = 0);
+
+	// 拷贝构造函数
+	DDHeader(const DDHeader& other);
+
+	// 赋值运算符重载函数
+	DDHeader & operator=(const DDHeader& other);
+
+	// 显示默认析构函数
+	virtual ~DDHeader(void) = default;
+
+	// 返回[请求头类型][禁止修改]
+	inline const DDHEADER_TYPE retType(void) const { return _header_type; };
+	// 设置[请求头类型]
+	inline void setType(const DDHEADER_TYPE& type) { _header_type = type; };
+
+	// 返回[发送方账号][禁止修改]
+	inline ID retFromId(void) const { return _header_from; };
+	// 设置[发送方账号]
+	inline void setFromId(const ID& id) { _header_from = id; };
+
+	// 返回[接收方账号][禁止修改]
+	inline ID retToId(void) const { return _header_to; };
+	// 设置[接收方账号]
+	inline void setToId(const ID& id) { _header_to = id; };
+
+	// 返回[请求头长度][禁止修改]
+	inline const uint64_t retLength(void) const { return _header_length; };
+	// 设置[请求头长度]
+	inline void setLength(const uint64_t& len) { _header_length = len; };
+
+	// 创建[文本请求报文]
+	/****************************************************************
+	 * 报文头组成部分
+	 * |Type:	| 发送类型 | 换行符
+	 * |From:   | 发送账号 | 换行符
+	 * |To:     | 接受账号 | 换行符
+	 * |Length: | 数据长度 | 换行符 × 2
+	 *
+	 * 对应的字节为：
+	 * | 6个字节 |  1个字节 | 1个字节
+	 * | 6个字节 | 13个字节 | 1个字节
+	 * | 4个字节 | 13个字节 | 1个字节
+	 * | 8个字节 | 12个字节 | 2个字节
+	 * 一共 68 个字节
+	 *
+	 * 空缺字节用'#'填充
+	 ****************************************************************/
+	std::string createHeader(const std::string& t_data);
+	// 解析[请求头类型的内容]
+	const char * parseTypeHeader(const char* buff);
+	// 解析[请求头属性的内容]
+	const char * parseAttributesHeader(const char* buff);
+
+	// 创建[文本数据]
+	std::string createTextData(const TRANSFER_TYPE& type, const TRANSFER_STATUS& status, std::string xml);
+	// 处理[文本数据]
+	void processingTextData(const std::string& data);
+	
+	// 创建[图片数据]
+	std::string createImageData(const char * path, const char * name, const char * suffix, const uint8_t& suffix_len);
+	// 处理[文本数据]
+	void processingImageData(const std::string & data);
+
+
+private:
+
+	DDHEADER_TYPE _header_type;				// 请求头类型
+	ID _header_from;						// 发送方账号
+	ID _header_to;							// 接收方账号
+	uint64_t _header_length;				// 请求头长度
+
+
+	// 创建[请求头属性][返回最后读取到位置]
+	const char * parseAttributes(std::string & value, const uint32_t& header_name, const uint32_t& header_max, const char* buff);
+	// 解析[请求头属性][返回字符串样式]
+	std::string createAttributes(const std::string &key, const std::string & value, const uint32_t& header_max);
+
+	// 创建[请求头ID的值的字符串格式]
+	inline std::string createIdValueStr(const ID& id) const
+	{
+		if (id.retIdType() == ID::user) return std::string("u") + id.retId();
+		if (id.retIdType() == ID::group) return std::string("g") + id.retId();
+	}
+	// 解析[请求头ID的值的字符串格式]
+	inline ID::ID_TYPE parseIdValueStr(const char& ch)
+	{
+		if (ch == 'u') return ID::user;
+		if (ch == 'g') return ID::group;
+	}
+
+	// 返回一个不重名的名字
+	std::string giveAName(void);
+};
 
 #ifdef _WIN32			// win平台
 
@@ -128,7 +187,7 @@ void recvDDServer(int fd, char * buff, int len);
  * to: 1
  * length: 32
  *
- * <data type="_login" status="request" from="client" to="server">
+ * <data type="_login" status="request">
  *      <passward>123456<passward>
  * </data>
  *
@@ -137,7 +196,7 @@ void recvDDServer(int fd, char * buff, int len);
  * to: 2248585019
  * length: 29
  *
- * <data type="_login" status="reply" from="server" to="client">
+ * <data type="_login" status="reply">
  *      <passward>true<passward>
  * </data>
  ****************************************************************/
@@ -191,7 +250,7 @@ void recvDDServer(int fd, char * buff, int len);
  *
  ****************************************************************/
 // 创建send请求类型的内容[XML]
-std::string sendData(uint64_t time, const char * message, const MessageData::DATA_TYPE& m_type, const char * id = "-1");
+//std::string sendData(uint64_t time, const char * message, const MessageData::DATA_TYPE& m_type, const char * id = "-1");
 
 
 

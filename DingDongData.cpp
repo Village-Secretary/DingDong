@@ -10,7 +10,7 @@ using pugi::xml_node;
 using std::list;
 using std::make_pair;
 
-inline string setLevel(int level)
+string setLevel(int level)
 {
 	string temp;
 	for (int i = 0; i < level; i++)

@@ -18,6 +18,8 @@ constexpr uint32_t GROUP_INTRODUCTION_MAX = 255;
 constexpr uint32_t MESSAGE_DATA_MAX = 600;
 constexpr uint32_t VERIFY_MAX = 90;
 
+// 设置标签的换行
+std::string setLevel(int level);
 
 // 消息ID
 class ID {
@@ -55,7 +57,7 @@ public:
 	// 返回[ID类型][禁止修改]
 	inline const ID_TYPE retIdType(void) const { return _type; };
 	// 设置[ID类型]
-	inline void setId(const ID_TYPE& type) { _type = type; };
+	inline void setIdType(const ID_TYPE& type) { _type = type; };
 
 	// 根据字符串判断ID类型
 	static inline ID_TYPE strToIdType(const std::string& str)

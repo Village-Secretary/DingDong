@@ -35,8 +35,8 @@ void initialization();              // 初始化Winsock2.2版本
 
 constexpr uint32_t BUFF_MAX = 1024;
 
-//#define __DEBUG_TRANSFERDATA_SEND_SERVER			// 测试服务器
-#define __DEBUG_TRANSFERDATA_SEND_CLIENT			// 测试客户端
+#define __DEBUG_TRANSFERDATA_SEND_SERVER			// 测试服务器
+//#define __DEBUG_TRANSFERDATA_SEND_CLIENT			// 测试客户端
 
 
 #endif
@@ -327,6 +327,8 @@ uint32_t main(void)
 		cout << "connect to server succeeded" << endl;
 	}
 
+	std::string path = "C:\\Users\\ZombieProcess\\Desktop\\DingDong\\image\\client\\";
+	uint32_t count = 0;
 	while (true)
 	{
 		uint32_t num = 0, type = 0;
@@ -344,8 +346,9 @@ uint32_t main(void)
 			int send_len;
 			if (type == 1)
 			{
-				std::string data = sendData(retNowTime(), "fwahifhwaoifwoaifhawoihwoahohwaffwaofgowafoawjfg", MessageData::text);
-				std::string message = requestMessage(TRANSFER_TYPE::_send, TRANSFER_STATUS::request, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group), data);
+
+				DDHeader m_header(DDHeader::DDHEADER_TYPE::message, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group));
+				std::string message = m_header.createHeader(m_header.createTextData(TRANSFER_TYPE::_send, TRANSFER_STATUS::_request, ""));
 
 				send_len = send(s_server, message.c_str(), message.size(), 0);
 				if (send_len != message.size())
@@ -353,29 +356,20 @@ uint32_t main(void)
 			}
 			if (type == 2)
 			{
-				std::string path = "C:\\Users\\ZombieProcess\\Desktop\\DingDong\\image\\client\\";
-				std::string message = requestImage(std::to_string(i).c_str(), std::to_string(i + 1).c_str(), (path + std::to_string(i) + ".jpg").c_str());
-				send_len = send(s_server, message.c_str(), message.size() - 1, 0);
-				if (send_len != message.size() - 1)
-					cout << "error: inconsistent data  send len: " << send_len << " data len: " << message.size() - 1 << endl;
+				DDHeader m_header(DDHeader::DDHEADER_TYPE::image, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group));
+				std::string message = m_header.createHeader(m_header.createImageData(path.c_str(), std::to_string(i).c_str(), "jpg", 3));
+				send_len = send(s_server, message.c_str(), message.size(), 0);
+				if (send_len != message.size())
+					cout << "error: inconsistent data  send len: " << send_len << " data len: " << message.size() << endl;
 			}
 
 			if (send_len < 0)
 				cout << "send failed! error code: " << WSAGetLastError() << endl;
 			else
-				cout << "send succeeded" << "\tsend len: " << send_len << endl;
-
+				cout << "[" << count << "]" << " send succeeded" << "\tsend len: " << send_len << endl;
+			count += 1;
 			// 根据发送的文件大小来觉得等待的时间
 			uint32_t time_num = 0;
-
-			if (send_len < 1024 * 0.5)
-				time_num = 1;
-			if (send_len < 1024 * 2)
-				time_num = 2;
-			else if (send_len < 1024 * 512)
-				time_num = 2;
-			else if (send_len < 1024 * 1024)
-				time_num = 3;
 
 			//Sleep(150);
 		}
@@ -394,6 +388,7 @@ uint32_t main(void)
 	system("pause");
 #endif
 
+	return 0;
 }
 
 // 测速客户端和服务器之间的转发协议，这里显示定义的初始化WinSock函数
