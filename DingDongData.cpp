@@ -208,10 +208,10 @@ GroupData GroupData::toGroupData(const xml_node & node)
 }
 
 // 列表初始化构造函数
-RequestData::RequestData(const uint32_t& id) : _request_id(id) {  };
+RequestData::RequestData(const uint64_t& id) : _request_id(id) {  };
 
 // 列表初始化构造函数
-RequestData::RequestData(const uint32_t& id, const ID& from, const ID& to, const char * verify, const REQUEST_STATUS& status, const uint32_t & time) : _request_id(id), _from_id(from), _to_id(to), _request_status(status), _request_time(time)
+RequestData::RequestData(const uint64_t& id, const ID& from, const ID& to, const char * verify, const REQUEST_STATUS& status, const uint32_t & time) : _request_id(id), _from_id(from), _to_id(to), _request_status(status), _request_time(time)
 {
 	strncpy(_verify_message, verify, sizeof(_verify_message));
 }
@@ -266,16 +266,16 @@ RequestData RequestData::toRequestData(const xml_node & node)
 	ID to = ID(node.child_value("to"), ID::strToIdType(node.child("to").attribute("type").value()));
 	string verify = node.child_value("verify");
 	REQUEST_STATUS status = strToRequestStatus(node.child_value("status"));
-	uint32_t time = stoi(node.child_value("time"));
+	uint32_t time = stoll(node.child_value("time"));
 
 	return RequestData(id, from, to, verify.c_str(), status, time);
 }
 
 // 列表初始化构造函数
-MessageData::MessageData(const uint32_t & id) : _message_id(id) {  };
+MessageData::MessageData(const uint64_t & id) : _message_id(id) {  };
 
 // 列表初始化构造函数
-MessageData::MessageData(const uint32_t & id, const DATA_TYPE& type, const char * from, const char * to, const uint64_t time, const char * data) : _message_id(id), _message_type(type), _send_time(time)
+MessageData::MessageData(const uint64_t & id, const DATA_TYPE& type, const char * from, const char * to, const uint64_t time, const char * data) : _message_id(id), _message_type(type), _send_time(time)
 {
 	strncpy(_from_id, from, sizeof(_from_id));
 	strncpy(_to_id, to, sizeof(_to_id));

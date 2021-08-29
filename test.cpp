@@ -17,11 +17,6 @@
 
 #endif
 
-
-#include "DingDongData.hpp"
-#include "TransferData.hpp"
-#include <iostream>
-
 // 测速客户端和服务器之间的转发协议
 #ifdef __DEBUG_TRANSFERDATA_SEND
 
@@ -38,12 +33,28 @@ constexpr uint32_t BUFF_MAX = 1024;
 #define __DEBUG_TRANSFERDATA_SEND_SERVER			// 测试服务器
 //#define __DEBUG_TRANSFERDATA_SEND_CLIENT			// 测试客户端
 
+#ifdef __DEBUG_TRANSFERDATA_SEND_SERVER
+
+#define __DD_SERVER
+
+#endif
+
+#ifdef __DEBUG_TRANSFERDATA_SEND_CLIENT
+
+#define __DD_CLIENT
 
 #endif
 
 
+#endif
+
+#include "DingDongData.hpp"
+#include "TransferData.hpp"
+#include <iostream>
+
 uint32_t main(void)
 {
+
 
 	// 测试UserData类的初始化、XML转UserData、UserData转XML
 #ifdef __DEBUG_USER
@@ -327,7 +338,7 @@ uint32_t main(void)
 		cout << "connect to server succeeded" << endl;
 	}
 
-	std::string path = "C:\\Users\\ZombieProcess\\Desktop\\DingDong\\image\\client\\";
+	std::string temp_path = "C:\\Users\\ZombieProcess\\Desktop\\DingDong\\image\\client\\";
 	uint32_t count = 0;
 	while (true)
 	{
@@ -348,16 +359,26 @@ uint32_t main(void)
 			{
 
 				DDHeader m_header(DDHeader::DDHEADER_TYPE::message, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group));
-				std::string message = m_header.createHeader(m_header.createTextData(TRANSFER_TYPE::_send, TRANSFER_STATUS::_request, ""));
+				auto data = m_header.createSendData(0, retNowTime(), MessageData::text, "fioafiowafjawjfaofjopaw");
+				std::string message = m_header.createHeader(m_header.createTextData(TRANSFER_TYPE::_send, TRANSFER_STATUS::_request, data));
 
 				send_len = send(s_server, message.c_str(), message.size(), 0);
 				if (send_len != message.size())
-					cout << "error: inconsistent data" << endl;
+					cout << "error: inconsistent data" << send_len << " data len: " << message.size() << endl;
 			}
 			if (type == 2)
 			{
-				DDHeader m_header(DDHeader::DDHEADER_TYPE::image, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group));
-				std::string message = m_header.createHeader(m_header.createImageData(path.c_str(), std::to_string(i).c_str(), "jpg", 3));
+				std::string path, imagefile;
+				DDHeader m_header(DDHeader::DDHEADER_TYPE::message, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group));
+				auto data = m_header.createSendData(0, retNowTime(), MessageData::image, (temp_path + std::to_string(i) + ".jpg").c_str(), 0, path, imagefile);
+				std::string message = m_header.createHeader(m_header.createTextData(TRANSFER_TYPE::_send, TRANSFER_STATUS::_request, data));
+
+				send_len = send(s_server, message.c_str(), message.size(), 0);
+				if (send_len != message.size())
+					cout << "error: inconsistent data" << send_len << " data len: " << message.size() << endl;
+
+				DDHeader i_header(DDHeader::DDHEADER_TYPE::image, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group));
+				message = i_header.createHeader(i_header.createImageData(path.c_str(), imagefile.c_str(), 0));
 				send_len = send(s_server, message.c_str(), message.size(), 0);
 				if (send_len != message.size())
 					cout << "error: inconsistent data  send len: " << send_len << " data len: " << message.size() << endl;

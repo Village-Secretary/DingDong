@@ -286,10 +286,10 @@ public:
 	RequestData(void) = default;
 
 	// 列表初始化构造函数
-	RequestData(const uint32_t& id);
+	RequestData(const uint64_t& id);
 
 	// 列表初始化构造函数
-	RequestData(const uint32_t& id, const ID& from, const ID& to, const char * verify, const REQUEST_STATUS& status, const uint32_t & time);
+	RequestData(const uint64_t& id, const ID& from, const ID& to, const char * verify, const REQUEST_STATUS& status, const uint32_t & time);
 
 	// 拷贝构造函数
 	RequestData(const RequestData & request);
@@ -304,9 +304,9 @@ public:
 	bool operator==(const RequestData & request) const;
 
 	// 返回[请求id][禁止修改]
-	inline uint32_t retId(void) const { return _request_id; };
+	inline uint64_t retId(void) const { return _request_id; };
 	// 设置[请求id]
-	inline void setId(const uint32_t& id) { _request_id = id; };
+	inline void setId(const uint64_t& id) { _request_id = id; };
 
 	// 返回[发送id][禁止修改]
 	inline const ID retFromId(void) const { return _from_id; };
@@ -366,7 +366,7 @@ public:
 
 private:
 
-	uint32_t _request_id;               // 请求id
+	uint64_t _request_id;               // 请求id
 	ID _from_id;                        // 发送id
 	ID _to_id;                          // 接收id
 	char _verify_message[VERIFY_MAX];   // 验证信息
@@ -387,10 +387,10 @@ public:
 	MessageData(void) = default;
 
 	// 列表初始化构造函数
-	MessageData(const uint32_t & id);
+	MessageData(const uint64_t & id);
 
 	// 列表初始化构造函数
-	MessageData(const uint32_t & id, const DATA_TYPE& type, const char * from, const char * to, const uint64_t time, const char * data);
+	MessageData(const uint64_t & id, const DATA_TYPE& type, const char * from, const char * to, const uint64_t time, const char * data);
 
 	// 拷贝构造函数
 	MessageData(const MessageData& message);
@@ -405,9 +405,9 @@ public:
 	bool operator==(const MessageData & message) const;
 
 	// 返回[消息id][禁止修改]
-	inline uint32_t retId(void) const { return _message_id; };
+	inline uint64_t retId(void) const { return _message_id; };
 	// 设置[发送id]
-	inline void setId(const uint32_t& id) { _message_id = id; };
+	inline void setId(const uint64_t& id) { _message_id = id; };
 
 	// 返回[消息类型][禁止修改]
 	inline DATA_TYPE retType(void) const { return _message_type; };
@@ -474,7 +474,7 @@ public:
 
 private:
 
-	uint32_t _message_id;                           // 消息id
+	uint64_t _message_id;                           // 消息id
 	DATA_TYPE _message_type;                        // 消息类型
 	char _from_id[ID_MAX];                          // 发送账号
 	char _to_id[ID_MAX];                            // 接受账号

@@ -20,12 +20,29 @@ constexpr uint32_t HEADER_TYPE_LENGTH = HEADER_KEY_TYPE + HEADER_VALUE_TYPE + 1;
 // 普通请求头数据大小
 constexpr uint32_t HEADER_ATTRIBUTES_LENGTH = HEADER_KEY_FROM + HEADER_VALUE_ID + HEADER_KEY_TO + HEADER_VALUE_ID + HEADER_KEY_LENGTH + HEADER_VALUE_LENGTH + NEW_LINE(3);
 
+// 图片名称大小
+constexpr uint32_t IMAGE_FILE_LENGTH = 30;
+
 // 图片路径
-constexpr const char * IMAGE_ROOT_DIRECTORY = "\\image\\";
-constexpr const char * IMAGE_USER_AVACTAR = "\\image\\user_avatar\\";
-constexpr const char * IMAGE_GROUP_AVACTAR = "\\image\\group_avatar\\";
-constexpr const char * IMAGE_USER_MESSAGE = "\\image\\user_message\\";
-constexpr const char * IMAGE_GROUP_MESSAGE = "\\image\\group_message\\";
+#ifdef __DD_CLIENT
+
+constexpr const char * IMAGE_ROOT_DIRECTORY = "client\\image\\";
+constexpr const char * IMAGE_USER_AVACTAR = "client\\image\\user_avatar\\";
+constexpr const char * IMAGE_GROUP_AVACTAR = "client\\image\\group_avatar\\";
+constexpr const char * IMAGE_USER_MESSAGE = "client\\image\\user_message\\";
+constexpr const char * IMAGE_GROUP_MESSAGE = "client\\image\\group_message\\";
+
+#endif
+
+#ifdef __DD_SERVER
+
+constexpr const char * IMAGE_ROOT_DIRECTORY = "server\\image\\";
+constexpr const char * IMAGE_USER_AVACTAR = "server\\image\\user_avatar\\";
+constexpr const char * IMAGE_GROUP_AVACTAR = "server\\image\\group_avatar\\";
+constexpr const char * IMAGE_USER_MESSAGE = "server\\image\\user_message\\";
+constexpr const char * IMAGE_GROUP_MESSAGE = "server\\image\\group_message\\";
+
+#endif
 
 // 返回当前时间[uint64_t类型]
 uint64_t retNowTime(const bool& is_day = false);
@@ -66,7 +83,7 @@ class DDHeader
 
 public:
 
-	enum DDHEADER_TYPE { message = 1, image = 2 };
+	enum DDHEADER_TYPE { message = 0, image = 1 };
 
 	// 显示默认构造函数
 	DDHeader(void) = default;
@@ -127,15 +144,54 @@ public:
 	const char * parseAttributesHeader(const char* buff);
 
 	// 创建[文本数据]
-	std::string createTextData(const TRANSFER_TYPE& type, const TRANSFER_STATUS& status, std::string xml);
+	std::string createTextData(const TRANSFER_TYPE& type, const TRANSFER_STATUS& status, pugi::xml_document & node);
 	// 处理[文本数据]
 	void processingTextData(const std::string& data);
 	
 	// 创建[图片数据]
-	std::string createImageData(const char * path, const char * name, const char * suffix, const uint8_t& suffix_len);
+	/****************************************************************
+	 * 图片数据组成部分
+	 * | 文件名称和后缀 | 图片操作[消息/头像] |
+	 * 第一个长度为：IMAGE_FILE_LENGTH
+	 * 第二个长度为：1个字节
+	 ****************************************************************/
+	std::string createImageData(const char * path, const char * imagefile, const uint8_t& operate);
 	// 处理[文本数据]
 	void processingImageData(const std::string & data);
 
+	/****************************************************************
+	 * 转发请求头
+	 * from: 2248585019
+	 * to: 1961776643
+	 * length: 32
+	 * 客户端send请求：
+	 * <data type="send" status="request">
+	 *      <id>0</id>
+	 *		<time></time>
+	 *		<message type="text"></message> or
+	 *		<message type="image"></message>
+	 * </data>
+	 * 服务器send转发：
+	 * <data type="send" status="request">
+	 *      <id>111</id>
+	 *		<time></time>
+	 *		<message type="text"></message> or
+	 *		<message type="image"></message>
+	 * </data>
+	 *
+	 * 主要是修改了ID,保持客户端和服务器的数据统一
+	 *
+	 * 服务器send返回
+	 * from: 1
+	 * to: 2248585019
+	 * length: 29
+	 *
+	 * <data type="send" status="reply">
+	 *      <id>111<id>
+	 * </data>
+	 ****************************************************************/
+	pugi::xml_document createSendData(const uint64_t& id, const uint64_t& time, const MessageData::DATA_TYPE& m_type, const char * messgae);
+	pugi::xml_document createSendData(const uint64_t& id, const uint64_t& time, const MessageData::DATA_TYPE& m_type, const char * messgae, const uint8_t& operate, std::string& newpath, std::string& imagefile);
 
 private:
 
@@ -144,6 +200,8 @@ private:
 	ID _header_to;							// 接收方账号
 	uint64_t _header_length;				// 请求头长度
 
+	// 填充#符号
+	std::string fillPoundKey(std::string &str, const uint32_t& max);
 
 	// 创建[请求头属性][返回最后读取到位置]
 	const char * parseAttributes(std::string & value, const uint32_t& header_name, const uint32_t& header_max, const char* buff);
@@ -165,6 +223,12 @@ private:
 
 	// 返回一个不重名的名字
 	std::string giveAName(void);
+
+	// 根据操作选择路径
+	std::string choosePath(const uint8_t& operate);
+
+	// 获取后缀
+	inline std::string getSuffix(const std::string& file) { return file.substr(file.find_last_of('.') + 1); };
 };
 
 #ifdef _WIN32			// win平台
@@ -187,8 +251,8 @@ void recvDDServer(int fd, char * buff, int len);
  * to: 1
  * length: 32
  *
- * <data type="_login" status="request">
- *      <passward>123456<passward>
+ * <data type="login" status="request">
+ *      <passward>123456</passward>
  * </data>
  *
  * 登录返回
@@ -196,116 +260,42 @@ void recvDDServer(int fd, char * buff, int len);
  * to: 2248585019
  * length: 29
  *
- * <data type="_login" status="reply">
- *      <passward>true<passward>
+ * <data type="login" status="reply">
+ *      <passward>true</passward>
  * </data>
  ****************************************************************/
 
- /****************************************************************
-  * 同步请求
-  * from: 2248585019
-  * to: 1
-  * length: 32
-  *
-  * <data type="_synchr" status="request" from="client" to="server">
-  * </data>
-  *
-  * 同步返回
-  * from: 1
-  * to: 2248585019
-  * length: 32
-  *
-  * <data type="_synchr" status="reply" from="server" to="client">
-  *      <qq>...
-  *      <qq>
-  * </data>
-  ****************************************************************/
-
 /****************************************************************
- * 转发请求
- * From: 2248585019
- * To: 1961776643
- * Length: 39
- *
- * <data type="_send" status="request" from="user" to="user">
- *      <id>-1</id>
- *      <time>20210822213512</time>
- *      <message type="text">I'm so hungry</message>
- * </data>
- * OR
- * <data type="_send" status="request" from="user" to="group">
- *      <id>-1</id>
- *      <time>20210822213512</time>
- *      <message type="image">/image/message/123.jpg</message>
- * </data>
- *
- * 转发返回[返回ID]
- * from: 1
- * to: 2248585019
- * length: 25
- *
- * <data type="_send" status="reply" from="user" to="user">
- *      <id>4314</id>
- * </data>
- *
- ****************************************************************/
-// 创建send请求类型的内容[XML]
-//std::string sendData(uint64_t time, const char * message, const MessageData::DATA_TYPE& m_type, const char * id = "-1");
-
-
-
-/****************************************************************
- * 添加请求
+ * 转发请求头
  * from: 2248585019
  * to: 1961776643
- * length: 39
- *
- * <data type="add" status="request" from="user" to="user">
+ * length: 32
+ * 客户端send请求：
+ * <data type="send" status="request">
  *      <id>-1</id>
- *      <time>20210822213512</time>
- *      <verify>hi~ my name is Romeo</verify>
+ *		<time></time>
+ *		<message type="text"></message> or
+ *		<message type="image"></message>
  * </data>
- * OR
- * <data type="add" status="request" from="user" to="group">
- *      <id>-1</id>
- *      <time>20210822213512</time>
- *      <verify>hi~</verify>
+ * 服务器send转发：
+ * <data type="send" status="request">
+ *      <id>111</id>
+ *		<time></time>
+ *		<message type="text"></message> or
+ *		<message type="image"></message>
  * </data>
  *
- * 添加返回
+ * 主要是修改了ID,保持客户端和服务器的数据统一
+ *
+ * 服务器send返回
  * from: 1
  * to: 2248585019
- * length: 25
+ * length: 29
  *
- * <data type="add" status="reply" from="server" to="client">
- *      <id>4314</id>
- * </data>
- *
- * 同意/拒绝 请求
- * from: 1961776643
- * to: 2248585019
- * length: 25
- *
- * <data type="add" status="reply" from="user" to="user">
- *      <id>4314</id>
- *      <time>20210822213512</time>
- *      <status>true</status>
- *      <verify>hi~ my name is Romeo</verify>
- * </data>
- * OR
- * <data type="add" status="reply" from="group" to="user">
- *      <id>4314</id>
- *      <time>20210822213512</time>
- *      <status>false</status>
- *      <verify>hi~</verify>
+ * <data type="send" status="reply">
+ *      <id>111<id>
  * </data>
  ****************************************************************/
-
- // // 创建ID[XML格式]
- // inline std::string idData(const char * id) { return string("<id>") + id + "</id>"; };
-
-
-
 
 
 #endif
