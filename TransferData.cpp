@@ -159,13 +159,13 @@ string DDHeader::createTextData(const TRANSFER_TYPE& type, const TRANSFER_STATUS
 
 	return data.result;
 }
-void DDHeader::processingTextData(const std::string & data)
+void DDHeader::textDataHandler(const std::string & data)
 {
 	pugi::xml_document messgae_xml;
 	pugi::xml_parse_result result_user = messgae_xml.load_string(data.c_str());
 	if (!result_user)
 	{
-		std::cout << "abnormal: xml_document![processingTextData]" << std::endl;
+		std::cout << "abnormal: xml_document![textDataHandler]" << std::endl;
 		return;
 	}
 
@@ -180,8 +180,8 @@ void DDHeader::processingTextData(const std::string & data)
 	{
 	case _login:
 		break;
-	case _synchr:
-		break;
+	// case _synchr:
+	// 	break;
 	case _send:
 		break;
 	case _add:
@@ -192,7 +192,7 @@ void DDHeader::processingTextData(const std::string & data)
 
 }
 
-string DDHeader::createImageData(const char * path, const char * imagefile, const uint8_t& operate)
+string DDHeader::createImageData(const char * path, const char * imagefile, const TRANSFER_TYPE& operate)
 {
 
 	ifstream file_in(string(path) + imagefile, ifstream::binary);
@@ -207,41 +207,41 @@ string DDHeader::createImageData(const char * path, const char * imagefile, cons
 	while (file_in) data.push_back(file_in.get());
 	file_in.close();
 
-	string file(imagefile);
-	file = fillPoundKey(file, IMAGE_FILE_LENGTH - file.size());
+	string s_imagefile(imagefile), s_type(transferTypeToStr(operate));
+	s_imagefile = fillPoundKey(s_imagefile, IMAGE_FILE_LENGTH - s_imagefile.size());
+	s_type = fillPoundKey(s_type, TRANSFER_TYPE_STRING_LENGTH - s_type.size());
+	
 
 	// 如果文件名和后缀大于IMAGE_FILE_LENGTH，则创建失败
-	if (file.size() > IMAGE_FILE_LENGTH)
+	if (s_imagefile.size() > IMAGE_FILE_LENGTH)
 	{
 		std::cout << "abnormal: IMAGE_FILE_LENGTH![createImageData]" << std::endl;
 		return "";
 	}
 
-	return file + to_string(operate) + data;
+	return s_imagefile + s_type + data;
 }
-void DDHeader::processingImageData(const std::string & data)
+void DDHeader::imageDataHandler(const std::string & data)
 {
 	if (data.size() == 0) return;
 
-	string path, file;
+	string path, s_imagefile, s_type;
 
-	// 获取图片后缀
-	parseAttributes(file, 0, IMAGE_FILE_LENGTH, data.data());
+	// 获取图片后缀和图片操作
+	parseAttributes(s_type, 0, TRANSFER_TYPE_STRING_LENGTH, parseAttributes(s_imagefile, 0, IMAGE_FILE_LENGTH, data.data()));
 
-	uint8_t operate = data[IMAGE_FILE_LENGTH] - 48;			// 获取图片操作
-
-	path = choosePath(operate);		// 根据图片操作选择路径
+	path = choosePath(strToTransferType(s_type));		// 根据图片操作选择路径
 
 	// 创建存储改图片
-	ofstream image_file(path + file, ofstream::binary);
+	ofstream image_file(path + s_imagefile, ofstream::binary);
 	if (!image_file)
 	{
-		std::cout << "abnormal: ofstream![processingImageData]" << std::endl;
+		std::cout << "abnormal: ofstream![imageDataHandler]" << std::endl;
 		return;
 	}
 	
 	// 写入数据
-	for (auto p = data.begin() + IMAGE_FILE_LENGTH + 1; p != data.end(); ++p)
+	for (auto p = data.begin() + IMAGE_FILE_LENGTH + TRANSFER_TYPE_STRING_LENGTH; p != data.end(); ++p)
 		image_file.put(*p);
 	image_file.close();
 
@@ -253,7 +253,46 @@ void DDHeader::processingImageData(const std::string & data)
 
 }
 
-pugi::xml_document DDHeader::createSendData(const uint64_t & id, const uint64_t & time, const MessageData::DATA_TYPE & m_type, const char * messgae)
+pugi::xml_document createOnlyID(const char *id)
+{
+	pugi::xml_document doc;
+	pugi::xml_node data = doc.append_child("data");
+	
+	pugi::xml_node id_node = data.append_child("id");
+
+	id_node.append_child(pugi::node_pcdata).set_value(id);
+
+	return doc;
+}
+
+pugi::xml_document DDHeader::createRegisterDataRequest(const char *name, const char * passward)
+{
+	pugi::xml_document doc;
+	pugi::xml_node data = doc.append_child("data");
+	
+	pugi::xml_node name_node = data.append_child("name");
+	pugi::xml_node passward_node = data.append_child("passward");
+
+	name_node.append_child(pugi::node_pcdata).set_value(name);
+	passward_node.append_child(pugi::node_pcdata).set_value(passward);
+
+	return doc;
+}
+pugi::xml_document DDHeader::createRegisterDataReply(const char *id)
+{
+	return createOnlyID(id);
+}
+
+pugi::xml_document createLoginDataRequest(const char * passward)
+{
+
+}
+pugi::xml_document createLoginDataReply(const bool is_right)
+{
+	
+}
+
+pugi::xml_document DDHeader::createSendDataRequest(const uint64_t & id, const uint64_t & time, const MessageData::DATA_TYPE & m_type, const char * message)
 {
 	pugi::xml_document doc;
 	pugi::xml_node data = doc.append_child("data");
@@ -266,40 +305,27 @@ pugi::xml_document DDHeader::createSendData(const uint64_t & id, const uint64_t 
 
 	pugi::xml_node node_message = data.append_child("message");
 	node_message.append_attribute("type") = MessageData::dataTypeToStr(m_type).c_str();
-	node_message.append_child(pugi::node_pcdata).set_value(messgae);
+	node_message.append_child(pugi::node_pcdata).set_value(message);
 
 	return doc;
 }
-pugi::xml_document DDHeader::createSendData(const uint64_t& id, const uint64_t& time, const MessageData::DATA_TYPE& m_type, const char * messgae, const uint8_t& operate, string& newpath, string& imagefile)
+pugi::xml_document DDHeader::createSendDataReply(const char *id)
 {
-	newpath = choosePath(operate);					// 获取路径
-	imagefile = giveAName();						// 获取名字
-	imagefile += "." + getSuffix(messgae);			// 获取后缀
-	
-	string image_data;
-	ifstream file_in(messgae, ofstream::binary);
-	if (!file_in)
-	{
-		std::cout << "abnormal: ifstream![createSendData]" << std::endl;
-	}
-
-	// 读取数据
-	while (file_in) { image_data.push_back(file_in.get()); };
-	file_in.close();
-
-	ofstream file_out(newpath + imagefile, ofstream::binary);
-	if (!file_out)
-	{
-		std::cout << "abnormal: ofstream![createSendData]" << std::endl;
-	}
-
-	// 写入数据
-	for (auto p = image_data.begin(); p != image_data.end(); ++p)
-		file_out.put(*p);
-	file_out.close();
-
-	return createSendData(id, time, m_type, messgae);
+	return createOnlyID(id);
 }
+
+pugi::xml_document DDHeader::createSettingData(const char * key, const char * value)
+{
+	pugi::xml_document doc;
+	pugi::xml_node data = doc.append_child("data");
+	
+	pugi::xml_node label = data.append_child(key);
+	label.append_child(pugi::node_pcdata).set_value(value);
+
+	return doc;
+}
+
+
 
 string DDHeader::giveAName(void)
 {
@@ -317,20 +343,65 @@ string DDHeader::giveAName(void)
 	return to_string(time) + "_" + to_string(increment);
 }
 
-string DDHeader::choosePath(const uint8_t& operate)
+string DDHeader::choosePath(const TRANSFER_TYPE& operate)
 {
-	// 消息操作
-	if (operate == 0)
+	switch (operate)
 	{
+	case TRANSFER_TYPE::_send: 
 		if (_header_to.retIdType() == ID::user) return IMAGE_USER_MESSAGE;
 		if (_header_to.retIdType() == ID::group) return IMAGE_GROUP_MESSAGE;
-	}
-	else if (operate == 1)
-	{
-		if (_header_to.retIdType() == ID::user) return IMAGE_USER_AVACTAR;
-		if (_header_to.retIdType() == ID::group) return IMAGE_GROUP_AVACTAR;
+		break;
+	case TRANSFER_TYPE::_setting:
+		if (_header_to.retIdType() == ID::user) return IMAGE_USER_AVATAR;
+		if (_header_to.retIdType() == ID::group) return IMAGE_GROUP_AVATAR;
+		break;
 	}
 }
+
+bool DDHeader::toOtherPath(const char * old_path, const char * new_path)
+{
+	string image_data;
+	ifstream file_in(old_path, ofstream::binary);
+	if (!file_in)
+	{
+		std::cout << "abnormal: ifstream![toOtherPath]" << std::endl;
+		return false;
+	}
+
+	// 读取数据
+	while (file_in) { image_data.push_back(file_in.get()); };
+	file_in.close();
+
+	ofstream file_out(new_path, ofstream::binary);
+	if (!file_out)
+	{
+		std::cout << "abnormal: ofstream![toOtherPath]" << std::endl;
+		return false;
+	}
+
+	// 写入数据
+	for (auto p = image_data.begin(); p != image_data.end(); ++p)
+		file_out.put(*p);
+	file_out.close();
+
+	return true;
+}
+
+bool DDHeader::setImageToRightPath(const char * oldpath, const TRANSFER_TYPE& operate, string& newpath, string& imagefile)
+{
+	newpath = choosePath(operate);				// 获取路径
+	imagefile = giveAName();					// 获取名字
+	imagefile += "." + getSuffix(oldpath);		// 获取后缀
+	
+	if (toOtherPath(oldpath, (newpath + imagefile).c_str()))	// 移动文件
+	{
+		std::cout << "abnormal: toOtherPath![setImageToRightPath]" << std::endl;
+		return false;
+	}
+
+	return true;
+}
+
 
 
 // 将数据暂存到暂存区
@@ -345,10 +416,8 @@ inline void clearTemporaryArea(char * temp_buff, uint32_t& temp_len, const uint3
 	temp_len = 0;							// 清零
 	memset(temp_buff, '\0', h_length);		// 数组清零
 }
-
-#ifdef _WIN32
-
-void recvDDServer(SOCKET fd, char * buff, int len)
+// 接受数据
+void ddRecv(dd_socket fd, char * buff, int len)
 {
 	static char t_temp_buff[HEADER_TYPE_LENGTH];					// 请求类型暂存区
 	uint32_t t_temp_len = 0;										// 请求类型暂存区长度
@@ -372,7 +441,7 @@ void recvDDServer(SOCKET fd, char * buff, int len)
 		{
 			if (!data_len_count)
 			{
-				if (!a_temp_len && isType)
+				if (isType)
 				{
 					// 判断剩余数据是否足够在读取一个完整 请求类型数据
 					if (p + HEADER_TYPE_LENGTH - t_temp_len > recv_end)
@@ -410,7 +479,6 @@ void recvDDServer(SOCKET fd, char * buff, int len)
 				else
 					p = dd_header.parseAttributesHeader(p);				// 读取请求属性数据
 				data_len_count = dd_header.retLength();					// 记录数据包剩余需要读取的大小
-				isType = true;
 
 				std::cout << "[" << num << "]"
 					<< " Type: " << dd_header.retType()
@@ -433,12 +501,13 @@ void recvDDServer(SOCKET fd, char * buff, int len)
 			{
 				data_buff += string(p, data_len_count);
 
-				if (dd_header.retType() == DDHeader::message) dd_header.processingTextData(data_buff);
-				if (dd_header.retType() == DDHeader::image) dd_header.processingImageData(data_buff);
+				if (dd_header.retType() == DDHeader::message) dd_header.textDataHandler(data_buff);
+				if (dd_header.retType() == DDHeader::image) dd_header.imageDataHandler(data_buff);
 
 				p += data_len_count;			// 调整读取位置p
 				data_buff.clear();				// 清理数据缓存
 				data_len_count = 0;				// 数据包计数器清零
+				isType = true;
 			}
 
 		}
@@ -446,5 +515,3 @@ void recvDDServer(SOCKET fd, char * buff, int len)
 
 	if (recv_len < 0) std::cout << "recv failed! error code: " << WSAGetLastError() << std::endl;
 }
-
-#endif

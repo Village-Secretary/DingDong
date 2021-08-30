@@ -317,7 +317,7 @@ uint32_t main(void)
 	
 	char recv_buff[BUFF_MAX]{ 0 };				// 缓存区：recv函数接受数据的缓存区
 
-	recvDDServer(s_accept, recv_buff, BUFF_MAX);
+	ddRecv(s_accept, recv_buff, BUFF_MAX);
 
 	cout << "end of receiving data." << endl;
 
@@ -357,7 +357,6 @@ uint32_t main(void)
 			int send_len;
 			if (type == 1)
 			{
-
 				DDHeader m_header(DDHeader::DDHEADER_TYPE::message, ID(std::to_string(i).c_str(), ID::user), ID(std::to_string(i + 1).c_str(), ID::group));
 				auto data = m_header.createSendData(0, retNowTime(), MessageData::text, "fioafiowafjawjfaofjopaw");
 				std::string message = m_header.createHeader(m_header.createTextData(TRANSFER_TYPE::_send, TRANSFER_STATUS::_request, data));

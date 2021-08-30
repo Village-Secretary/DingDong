@@ -18,6 +18,21 @@ constexpr uint32_t GROUP_INTRODUCTION_MAX = 255;
 constexpr uint32_t MESSAGE_DATA_MAX = 600;
 constexpr uint32_t VERIFY_MAX = 90;
 
+// constexpr const char * USER_ATTRIBUTES_ID = "id";
+// constexpr const char * USER_LABEL_NAME = "name";
+// constexpr const char * USER_LABEL_SEX = "sex";
+// constexpr const char * USER_LABEL_AVATAR = "avatar";
+// constexpr const char * USER_LABEL_BIRTH = "birth";
+// constexpr const char * USER_LABEL_SIGNATURE = "signature";
+
+// constexpr const char * GROUP_ATTRIBUTES_ID = "id";
+// constexpr const char * GROUP_LABEL_NAME = "name";
+// constexpr const char * GROUP_LABEL_AVATAR = "avatar";
+// constexpr const char * GROUP_LABEL_TIME = "time";
+// constexpr const char * GROUP_LABEL_INTRODUCTION = "introduction";
+// constexpr const char * GROUP_LABEL_OWNER = "owner";
+// constexpr const char * GROUP_LABEL_NUMBER = "number";
+
 // 设置标签的换行
 std::string setLevel(int level);
 
