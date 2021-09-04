@@ -10,13 +10,6 @@ using pugi::xml_node;
 using std::list;
 using std::make_pair;
 
-string setLevel(int level)
-{
-	string temp;
-	for (int i = 0; i < level; i++)
-		temp += "\t";
-	return temp;
-}
 
 // 列表初始化构造函数
 ID::ID(const char *id, ID_TYPE type) : _type(type)
@@ -104,19 +97,19 @@ bool UserData::operator==(const UserData & other) const
 }
 
 // 转换成XML格式
-string UserData::toXMLString(const UserData & user, int level)
+void UserData::toXML(const UserData & user, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加节点[data]
+	pugi::xml_node node_user = node.append_child("user");
+	// 添加属性
+	node_user.append_attribute("id") = user._user_id;
 
-	xml += str_level + "<user id=\"" + string(user._user_id) + "\">\n";
-	xml += str_level + "\t<name>" + string(user._user_name) + "</name>\n";
-	xml += str_level + "\t<sex>" + userSexToStr(user._user_sex) + "</sex>\n";
-	xml += str_level + "\t<avatar>" + string(user._user_avatar) + "</avatar>\n";
-	xml += str_level + "\t<birth>" + to_string(user._user_birth) + "</birth>\n";
-	xml += str_level + "\t<signature>" + string(user._user_signature) + "</signature>\n";
-	xml += str_level + "</user>\n";
-
-	return xml;
+	// 添加所有子节点
+	node_user.append_child("name").append_child(pugi::node_pcdata).set_value(user._user_name);
+	node_user.append_child("sex").append_child(pugi::node_pcdata).set_value(userSexToStr(user._user_sex).c_str());
+	node_user.append_child("avatar").append_child(pugi::node_pcdata).set_value(user._user_avatar);
+	node_user.append_child("birth").append_child(pugi::node_pcdata).set_value(to_string(user._user_birth).c_str());
+	node_user.append_child("signature").append_child(pugi::node_pcdata).set_value(user._user_signature);
 }
 
 // XML解析转换为UserData类型
@@ -177,20 +170,20 @@ bool GroupData::operator==(const GroupData & group) const
 }
 
 // 转换成XML格式
-std::string GroupData::toXMLString(const GroupData & group, int level)
+void GroupData::toXML(const GroupData & group, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加节点[data]
+	pugi::xml_node node_group = node.append_child("group");
+	// 添加属性
+	node_group.append_attribute("id") = group._group_id;
 
-	xml += str_level + "<group id=\"" + string(group._group_id) + "\">\n";
-	xml += str_level + "\t<name>" + string(group._group_name) + "</name>\n";
-	xml += str_level + "\t<avatar>" + string(group._group_avatar) + "</avatar>\n";
-	xml += str_level + "\t<time>" + to_string(group._group_time) + "</time>\n";
-	xml += str_level + "\t<introduction>" + string(group._group_introduction) + "</introduction>\n";
-	xml += str_level + "\t<owner>" + string(group._group_owner) + "</owner>\n";
-	xml += str_level + "\t<number>" + to_string(group._group_number) + "</number>\n";
-	xml += str_level + "</group>\n";
-
-	return xml;
+	// 添加所有子节点
+	node_group.append_child("name").append_child(pugi::node_pcdata).set_value(group._group_name);
+	node_group.append_child("avatar").append_child(pugi::node_pcdata).set_value(group._group_avatar);
+	node_group.append_child("time").append_child(pugi::node_pcdata).set_value(to_string(group._group_time).c_str());
+	node_group.append_child("introduction").append_child(pugi::node_pcdata).set_value(group._group_introduction);
+	node_group.append_child("owner").append_child(pugi::node_pcdata).set_value(group._group_owner);
+	node_group.append_child("number").append_child(pugi::node_pcdata).set_value(to_string(group._group_number).c_str());
 }
 
 // XML解析转换为GroupData类型
@@ -243,19 +236,23 @@ bool RequestData::operator==(const RequestData & request) const
 }
 
 // 转换成XML格式
-string RequestData::toXMLString(const RequestData & request, int level)
+void RequestData::toXML(const RequestData & request, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加节点[data]
+	pugi::xml_node node_request = node.append_child("user");
+	// 添加属性
+	node_request.append_attribute("id") = request._request_id;
 
-	xml += str_level + "<request id=\"" + to_string(request._request_id) + "\">\n";
-	xml += str_level + "\t<from type=\"" + ID::idTypeToStr(request._from_id.retIdType()) + "\">" + string(request._from_id.retId()) + "</from>\n";
-	xml += str_level + "\t<to type=\"" + ID::idTypeToStr(request._to_id.retIdType()) + "\">" + string(request._to_id.retId()) + "</to>\n";
-	xml += str_level + "\t<verify>" + string(request._verify_message) + "</verify>\n";
-	xml += str_level + "\t<status>" + requestStatusToStr(request._request_status) + "</status>\n";
-	xml += str_level + "\t<time>" + to_string(request._request_time) + "</time>\n";
-	xml += str_level + "</request>\n";
+	// 添加所有子节点
+	node_request.append_child("from").append_child(pugi::node_pcdata).set_value(request._from_id.retId());
+	node_request.append_child("to").append_child(pugi::node_pcdata).set_value(request._to_id.retId());
+	node_request.append_child("verify").append_child(pugi::node_pcdata).set_value(request._verify_message);
+	node_request.append_child("status").append_child(pugi::node_pcdata).set_value(requestStatusToStr(request._request_status).c_str());
+	node_request.append_child("time").append_child(pugi::node_pcdata).set_value(to_string(request._request_time).c_str());
 
-	return xml;
+	// 添加子节点属性
+	node_request.child("from").append_attribute("type") = ID::idTypeToStr(request._from_id.retIdType()).c_str();
+	node_request.child("to").append_attribute("type") = ID::idTypeToStr(request._to_id.retIdType()).c_str();
 }
 
 // XML解析转换为RequestData类型
@@ -275,10 +272,10 @@ RequestData RequestData::toRequestData(const xml_node & node)
 MessageData::MessageData(const uint64_t & id) : _message_id(id) {  };
 
 // 列表初始化构造函数
-MessageData::MessageData(const uint64_t & id, const DATA_TYPE& type, const char * from, const char * to, const uint64_t time, const char * data) : _message_id(id), _message_type(type), _send_time(time)
+MessageData::MessageData(const uint64_t & id, const DATA_TYPE& type, const char * from, /*const char * to, */const uint64_t& time, const char * data) : _message_id(id), _message_type(type), _send_time(time)
 {
 	strncpy(_from_id, from, sizeof(_from_id));
-	strncpy(_to_id, to, sizeof(_to_id));
+	// strncpy(_to_id, to, sizeof(_to_id));
 	strncpy(_message_data, data, sizeof(_message_data));
 }
 
@@ -286,7 +283,7 @@ MessageData::MessageData(const uint64_t & id, const DATA_TYPE& type, const char 
 MessageData::MessageData(const MessageData& message) : _message_id(message._message_id), _message_type(message._message_type), _send_time(message._send_time)
 {
 	strncpy(_from_id, message._from_id, sizeof(_from_id));
-	strncpy(_to_id, message._to_id, sizeof(_to_id));
+	// strncpy(_to_id, message._to_id, sizeof(_to_id));
 	strncpy(_message_data, message._message_data, sizeof(_message_data));
 }
 
@@ -296,7 +293,7 @@ MessageData & MessageData::operator=(const MessageData& message)
 	_message_id = message._message_id;
 	_message_type = message._message_type;
 	strncpy(_from_id, message._from_id, sizeof(_from_id));
-	strncpy(_to_id, message._to_id, sizeof(_to_id));
+	// strncpy(_to_id, message._to_id, sizeof(_to_id));
 	_send_time = message._send_time;
 	strncpy(_message_data, message._message_data, sizeof(_message_data));
 
@@ -311,18 +308,20 @@ bool MessageData::operator==(const MessageData & message) const
 }
 
 // 转换成XML格式
-std::string MessageData::toXMLString(const MessageData& message, int level)
+void MessageData::toXML(const MessageData& message, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加节点[data]
+	pugi::xml_node node_message = node.append_child("message");
+	// 添加属性
+	node_message.append_attribute("id") = message._message_id;
+	node_message.append_attribute("type") = dataTypeToStr(message._message_type).c_str();
 
-	xml += str_level + "<message id=\"" + to_string(message._message_id) + " type=" + dataTypeToStr(message._message_type) + "\">\n";
-	xml += str_level + "\t<from>" + string(message._from_id) + "</from>\n";
-	xml += str_level + "\t<to>" + string(message._to_id) + "</to>\n";
-	xml += str_level + "\t<time>" + to_string(message._send_time) + "</time>\n";
-	xml += str_level + "\t<data>" + string(message._message_data) + "</data>\n";
-	xml += str_level + "</message>\n";
+	// 添加所有子节点
+	node_message.append_child("from").append_child(pugi::node_pcdata).set_value(message._from_id);
+	// node_message.append_child("to").append_child(pugi::node_pcdata).set_value(message._to_id);
+	node_message.append_child("data").append_child(pugi::node_pcdata).set_value(to_string(message._send_time).c_str());
+	node_message.append_child("time").append_child(pugi::node_pcdata).set_value(message._message_data);
 
-	return xml;
 }
 
 // XML解析转换为UserData类型
@@ -331,11 +330,11 @@ MessageData MessageData::toMessageData(const xml_node & node)
 	uint32_t id = stoi(node.attribute("id").value());
 	MessageData::DATA_TYPE type = strToDataType(node.attribute("type").value());
 	string from = node.child_value("from");
-	string to = node.child_value("to");
+	// string to = node.child_value("to");
 	uint64_t time = stoll(node.child_value("time"));
 	string data = node.child_value("data");
 
-	return MessageData(id, type, from.c_str(), to.c_str(), time, data.c_str());
+	return MessageData(id, type, from.c_str(), /*to.c_str(), */time, data.c_str());
 }
 
 
@@ -365,17 +364,14 @@ DingDongData & DingDongData::operator=(const DingDongData &other)
 }
 
 // 好友列表转换成XML格式
-string DingDongData::friendListToXMLString(const UserList & friends, int level)
+void DingDongData::friendListToXML(const UserList & friends, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加子节点
+	pugi::xml_node node_list = node.append_child("friendlist");
 
-	xml += str_level + "<friendlist>\n";
+	// 循环往子节点添加内容
 	for (auto p = friends.begin(); p != friends.end(); p++)
-		xml += UserData::toXMLString(*p, level + 1);
-
-	xml += str_level + "</friendlist>\n";
-
-	return xml;
+		UserData::toXML(*p, node_list);
 }
 
 // XML解析转换为UserList类型
@@ -391,17 +387,14 @@ UserList DingDongData::toFriendList(const xml_node & node)
 }
 
 // 群列表转换成XML格式
-string DingDongData::groupListToXMLString(const GroupList & grouplist, int level)
+void DingDongData::groupListToXML(const GroupList & grouplist, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加子节点
+	pugi::xml_node node_list = node.append_child("grouplist");
 
-	xml += str_level + "<grouplist>\n";
+	// 循环往子节点添加内容
 	for (auto p = grouplist.begin(); p != grouplist.end(); p++)
-		xml += GroupData::toXMLString(*p, level + 1);
-
-	xml += str_level + "</grouplist>\n";
-
-	return xml;
+		GroupData::toXML(*p, node_list);
 }
 
 // XML解析转换为UserList类型
@@ -417,21 +410,22 @@ GroupList DingDongData::toGroupList(const xml_node & node)
 }
 
 // 群成员列表转换成XML格式
-string DingDongData::groupMemberListToXMLString(const GroupMemberList & memberlist, int level)
+void DingDongData::groupMemberListToXML(const GroupMemberList & memberlist, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加子节点
+	pugi::xml_node node_list = node.append_child("groupmemberslist");
 
-	xml += str_level + "<groupmemberslist>\n";
+	// 循环往子节点添加内容
 	for (auto p = memberlist.begin(); p != memberlist.end(); ++p)
 	{
-		xml += str_level + "\t<group id=\"" + p->first + "\">\n";
-		for (auto i = p->second.begin(); i != p->second.end(); ++i)
-			xml += UserData::toXMLString(*i, level + 2);
-		xml += str_level + "\t</group>\n";
-	}
-	xml += str_level + "</groupmemberslist>\n";
+		// 添加群子节点
+		pugi::xml_node node_group = node_list.append_child("group");
+		node_group.append_attribute("id") = p->first.c_str();
 
-	return xml;
+		// 往群子节点插入数据
+		for (auto i = p->second.begin(); i != p->second.end(); ++i)
+			UserData::toXML(*i, node_group);
+	}
 }
 
 // XML解析转换为UserList类型
@@ -446,17 +440,13 @@ GroupMemberList DingDongData::toGroupMemberList(const xml_node & node)
 }
 
 // 请求列表转换成XML格式
-string DingDongData::friendRequestListToXMLString(const RequestList & requestlist, int level)
+void DingDongData::friendRequestListToXML(const RequestList & requestlist, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加子节点
+	pugi::xml_node node_list = node.append_child("requestlist");
 
-	xml += str_level + "<requestlist>\n";
 	for (auto p = requestlist.begin(); p != requestlist.end(); p++)
-		xml += RequestData::toXMLString(*p, level + 1);
-
-	xml += str_level + "</requestlist>\n";
-
-	return xml;
+		RequestData::toXML(*p, node_list);
 }
 
 // XML解析转换为RequestList类型
@@ -472,36 +462,25 @@ RequestList DingDongData::toRequestList(const xml_node & node)
 }
 
 // 转换成XML格式 主要是区分出群账号消息记录和用户账号消息记录
-string DingDongData::messageListToXMLString(const MessageList & messagelist, int level)
+void DingDongData::messageListToXML(const MessageList & messagelist, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加子节点
+	pugi::xml_node node_list = node.append_child("messagelist");
 
-	xml += str_level + "<messagelist>\n";
-
+	// 往子节点添加内容
 	for (auto message : messagelist)
 	{
-		string id_type;
+		// 添加消息队列子节点
+		pugi::xml_node node_id = node_list.append_child("null");
+		node_id.append_attribute("id") = message.first.retId();
 
-		switch (message.first.retIdType())
-		{
-		case ID::ID_TYPE::user:
-			id_type = "user";
-			break;
-		case ID::ID_TYPE::group:
-			id_type = "group";
-			break;
-		}
+		if (message.first.retIdType() == ID::user) node_id.set_name("user");
+		else if (message.first.retIdType() == ID::group) node_id.set_name("group");
 
-		xml += str_level + "\t<" + id_type + " id=\"" + string(message.first.retId()) + "\">\n";
+		// 往消息队列子节点添加内容
 		for (auto p = message.second.begin(); p != message.second.end(); ++p)
-			xml += MessageData::toXMLString(*p, level + 2);
-		xml += str_level + "\t</" + id_type + ">\n";
-
+			MessageData::toXML(*p, node_id);
 	}
-
-	xml += str_level + "</messagelist>\n";
-
-	return xml;
 }
 
 // XML解析转换为MessageList类型
@@ -533,20 +512,17 @@ MessageList DingDongData::toMessageList(const xml_node & node)
 }
 
 // 转换成XML格式
-string DingDongData::toXMLString(const DingDongData & data, int level)
+void DingDongData::toXML(const DingDongData & data, pugi::xml_node & node)
 {
-	string xml, str_level = setLevel(level);
+	// 添加子节点
+	pugi::xml_node node_dd_data = node.append_child("ddData");
 
-	xml += str_level + "<qq>\n";
-	xml += str_level + UserData::toXMLString(data._myself, level + 1);
-	xml += str_level + DingDongData::friendListToXMLString(data._friends, level + 1);
-	xml += str_level + DingDongData::groupListToXMLString(data._groups, level + 1);
-	xml += str_level + DingDongData::groupMemberListToXMLString(data._members, level + 1);
-	xml += str_level + DingDongData::friendRequestListToXMLString(data._requests, level + 1);
-	xml += str_level + DingDongData::messageListToXMLString(data._messages, level + 1);
-	xml += str_level + "</qq>\n";
-
-	return xml;
+	UserData::toXML(data._myself, node_dd_data);
+	DingDongData::friendListToXML(data._friends, node_dd_data);
+	DingDongData::groupListToXML(data._groups, node_dd_data);
+	DingDongData::groupMemberListToXML(data._members, node_dd_data);
+	DingDongData::friendRequestListToXML(data._requests, node_dd_data);
+	DingDongData::messageListToXML(data._messages, node_dd_data);
 }
 
 // XML解析转换为DingDongData类型

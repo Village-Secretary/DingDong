@@ -1,13 +1,13 @@
 // This is a test
-// #define __DEBUG_USER
-// #define __DEBUG_GROUP
-// #define __DEBUG_REQUEST
-// #define __DEBUG_MESSAGE
-// #define __DEBUG_DATA
-// #define __DEBUG_DATA_FUNCTION
+ //#define __DEBUG_USER
+ //#define __DEBUG_GROUP
+ //#define __DEBUG_REQUEST
+ //#define __DEBUG_MESSAGE
+ //#define __DEBUG_DATA
+ //#define __DEBUG_DATA_FUNCTION
 // #define __DEBUG_DATA_IMAGE
  //#define __DEBUG_TRANSFERDATA_CREATE_AND_PARSE
- #define __DEBUG_TRANSFERDATA_SEND
+//#define __DEBUG_TRANSFERDATA_SEND
 
 
 // 测试DingDongData的数据增删查改功能，这里为打开DingDongData类的Show函数
@@ -52,6 +52,7 @@ constexpr uint32_t BUFF_MAX = 1024;
 #include "TransferData.hpp"
 #include <iostream>
 
+
 uint32_t main(void)
 {
 
@@ -65,7 +66,11 @@ uint32_t main(void)
 		return -1;
 	pugi::xml_node node_user = doc_user.child("user");
 	UserData user = UserData::toUserData(node_user);
-	std::cout << UserData::toXMLString(user) << std::endl;
+
+	pugi::xml_document doc_user_2;
+	pugi::xml_node root_user = doc_user_2.root();
+	UserData::toXML(user, root_user);
+	std::cout << xmlToString(doc_user_2) << std::endl;
 
 #endif
 
@@ -78,7 +83,11 @@ uint32_t main(void)
 		return -1;
 	pugi::xml_node node_group = doc_group.child("group");
 	GroupData group = GroupData::toGroupData(node_group);
-	std::cout << GroupData::toXMLString(group) << std::endl;
+
+	pugi::xml_document doc_group_2;
+	pugi::xml_node root_group = doc_group_2.root();
+	GroupData::toXML(group, root_group);
+	std::cout << xmlToString(doc_group_2) << std::endl;
 
 #endif
 
@@ -91,7 +100,11 @@ uint32_t main(void)
 		return -1;
 	pugi::xml_node node_request = doc_request.child("request");
 	RequestData request = RequestData::toRequestData(node_request);
-	std::cout << RequestData::toXMLString(request) << std::endl;
+
+	pugi::xml_document doc_request_2;
+	pugi::xml_node root_request = doc_request_2.root();
+	RequestData::toXML(request, root_request);
+	std::cout << xmlToString(doc_request_2) << std::endl;
 
 #endif
 
@@ -104,7 +117,12 @@ uint32_t main(void)
 		return -1;
 	pugi::xml_node node_message = doc_message.child("message");
 	MessageData message = MessageData::toMessageData(node_message);
-	std::cout << MessageData::toXMLString(message) << std::endl;
+
+	pugi::xml_document doc_message_2;
+	pugi::xml_node root_message = doc_message_2.root();
+	MessageData::toXML(message, root_message);
+	std::cout << xmlToString(doc_message_2) << std::endl;
+
 
 #endif
 
@@ -117,7 +135,11 @@ uint32_t main(void)
 		return -1;
 	pugi::xml_node node_data = doc_data.child("qq");
 	DingDongData data = DingDongData::toDingDongData(node_data);
-	std::cout << DingDongData::toXMLString(data) << std::endl;
+
+	pugi::xml_document doc_data_2;
+	pugi::xml_node root_data = doc_data_2.root();
+	DingDongData::toXML(data, root_data);
+	std::cout << xmlToString(doc_data_2) << std::endl;
 
 #endif
 
@@ -134,6 +156,7 @@ uint32_t main(void)
 	DingDongData data_function = DingDongData::toDingDongData(node_data_function);
 	data_function.show();
 
+	std::cout << "debug : user function" << std::endl << std::endl;
 	// 修改个人信息
 	UserData * myself = data_function.retMyself();
 	// myself->setId("123455")                              无法修改账号ID
@@ -143,6 +166,7 @@ uint32_t main(void)
 	myself->setSex(UserData::USER_SEX::null);               // 修改性别
 	myself->setSignature("");                               // 修改个性签名
 
+	std::cout << "debug : friend function" << std::endl << std::endl;
 	// 添加好友
 	UserData friend_1("123456789", "XiaoMing", UserData::USER_SEX::man, "./image/user_avatar/4314.jpg", 20010213, "Hello~");
 	data_function.addFriend(friend_1);
@@ -152,6 +176,7 @@ uint32_t main(void)
 	data_function.deleteFriend(UserData("1094311033"));
 	data_function.show();
 
+	std::cout << "debug : group function" << std::endl << std::endl;
 	// 添加群
 	GroupData group_1("123456789", "HappyFamily", "./image/group_avatar/32.jpg", 20210812, "XXXXXXXXXX", "2248585019", 2);
 	GroupData group_2("987654321", "HappyFamily", "./image/group_avatar/32.jpg", 20210812, "XXXXXXXXXX", "2248585019", 2);
@@ -163,6 +188,7 @@ uint32_t main(void)
 	data_function.deleteGroup(GroupData("987654321"));
 	data_function.show();
 
+	std::cout << "debug : groupmember function" << std::endl << std::endl;
 	// 添加群成员
 	std::pair<std::string, UserList>member_1(std::make_pair(std::string("123456789"), std::list<UserData>{ UserData("123"), UserData("456") }));
 	data_function.addGroupMember(member_1);
@@ -174,6 +200,7 @@ uint32_t main(void)
 	data_function.deleteGroupMember("123456789");
 	data_function.show();
 
+	std::cout << "debug : request function" << std::endl << std::endl;
 	// 添加请求
 	RequestData request_1(43252, ID("123456789", ID::group), ID("987654321", ID::user), "", RequestData::REQUEST_STATUS::agree, 20210612);
 	data_function.addRequest(request_1);
@@ -184,13 +211,15 @@ uint32_t main(void)
 	data_function.deleteRequest(RequestData(1342));
 	data_function.show();
 
+	std::cout << "debug : messgae function" << std::endl << std::endl;
 	// 添加消息
-	std::pair<ID, std::list<MessageData>> mesage_1(std::make_pair(ID("123456789", ID::ID_TYPE::group), std::list<MessageData>{ MessageData(42122, MessageData::DATA_TYPE::text, "123", "456", 20010244, "Ni Hao a") }));
-	std::pair<ID, std::list<MessageData>> mesage_2(std::make_pair(ID("123456789", ID::ID_TYPE::user), std::list<MessageData>{ MessageData(23242, MessageData::DATA_TYPE::text, "123", "456", 20010245, "XXX") }));
+	std::pair<ID, std::list<MessageData>> mesage_1(std::make_pair(ID("123456789", ID::ID_TYPE::group), std::list<MessageData>{ MessageData(42122, MessageData::DATA_TYPE::text, "456", 20010244, "Ni Hao a") }));
+	std::pair<ID, std::list<MessageData>> mesage_2(std::make_pair(ID("123456789", ID::ID_TYPE::user), std::list<MessageData>{ MessageData(23242, MessageData::DATA_TYPE::text, "123", 20010245, "XXX") }));
 	data_function.addMessage(mesage_1);
 	data_function.addMessage(mesage_2);
-	data_function.addMessage(ID("216559214", ID::ID_TYPE::group), MessageData(1293, MessageData::DATA_TYPE::text, "2248585019", "216559214", 20010713161243, "is so boring too!"));
+	data_function.addMessage(ID("216559214", ID::ID_TYPE::group), MessageData(1293, MessageData::DATA_TYPE::text, "2248585019", 20010713161243, "is so boring too!"));
 	data_function.show();
+	// 删除消息
 	data_function.deleteMessage(ID("123456789", ID::ID_TYPE::group), MessageData(42122));
 	data_function.show();
 	data_function.deleteMessage(ID("123456789", ID::ID_TYPE::user), MessageData(23242));
@@ -199,7 +228,10 @@ uint32_t main(void)
 	data_function.deleteMessage(ID("216559214", ID::ID_TYPE::group));
 	data_function.show();
 
-	std::cout << DingDongData::toXMLString(data_function) << std::endl;
+	pugi::xml_document doc_function;
+	pugi::xml_node root_data = doc_function.root();
+	DingDongData::toXML(data_function, root_data);
+	std::cout << xmlToString(doc_function) << std::endl;
 
 #endif
 
@@ -219,7 +251,7 @@ uint32_t main(void)
 #ifdef __DEBUG_TRANSFERDATA_CREATE_AND_PARSE
 
 	std::string request = requestMessage(TRANSFER_TYPE::_send, TRANSFER_STATUS::request, ID("12345", ID::user), ID("54321", ID::group), "");
-	
+
 	uint32_t type;
 	auto p = parseTypeHeader(type, request.c_str());
 	if (type != 1)
@@ -234,7 +266,7 @@ uint32_t main(void)
 	p = parseTypeHeader(type, request.c_str());
 	if (type != 1)
 		std::cout << "Error" << std::endl;
-	
+
 	p = parseImageHeader(from, to, path, m_len, p);
 	std::cout << "from: " << from << " to: " << to << " path: " << path << " len: " << m_len << std::endl;
 
@@ -313,8 +345,8 @@ uint32_t main(void)
 		return 0;
 	}
 
-	cout << "connection established, ready to receive data..." << endl;	
-	
+	cout << "connection established, ready to receive data..." << endl;
+
 	char recv_buff[BUFF_MAX]{ 0 };				// 缓存区：recv函数接受数据的缓存区
 
 	ddRecv(s_accept, recv_buff, BUFF_MAX);
@@ -408,6 +440,8 @@ uint32_t main(void)
 	system("pause");
 #endif
 
+
+
 	return 0;
 }
 
@@ -430,14 +464,14 @@ void initialization() {
 	else
 		cout << "initialization socket succeeded" << endl;
 
-	 //检测版本号	
-	 if (LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wHighVersion) != 2)
-	 {
-	 	cout << "socket version failed！" << endl;
-	 	WSACleanup();
-	 }
-	 else
-	 	cout << "Socket version succeeded！" << endl;
+	//检测版本号	
+	if (LOBYTE(wsadata.wVersion) != 2 || HIBYTE(wsadata.wHighVersion) != 2)
+	{
+		cout << "socket version failed！" << endl;
+		WSACleanup();
+	}
+	else
+		cout << "Socket version succeeded！" << endl;
 }
 
 #endif

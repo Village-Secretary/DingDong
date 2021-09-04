@@ -34,7 +34,27 @@ constexpr uint32_t VERIFY_MAX = 90;
 // constexpr const char * GROUP_LABEL_NUMBER = "number";
 
 // 设置标签的换行
-std::string setLevel(int level);
+// std::string setLevel(int level);
+
+struct xml_string_writer : pugi::xml_writer
+{
+	std::string result;
+
+	virtual void write(const void* data, size_t size)
+	{
+		result.append(static_cast<const char*>(data), size);
+	}
+};
+
+// xml转string
+inline std::string xmlToString(const pugi::xml_document& doc)
+{
+	// 转换成string类型
+	xml_string_writer data;
+	doc.save(data);
+
+	return data.result;
+}
 
 // 消息ID
 class ID {
@@ -162,7 +182,7 @@ public:
 	 *      <signature>理想万岁</signature>
 	 * </user>
 	 ****************************************************************/
-	static std::string toXMLString(const UserData & user, int level = 0);
+	static void toXML(const UserData & user, pugi::xml_node & node);
 
 	// XML解析转换为UserData类型
 	static UserData toUserData(const pugi::xml_node & node);
@@ -271,7 +291,7 @@ public:
 	 *      <number>3<number>
 	 * </group>
 	 ****************************************************************/
-	static std::string toXMLString(const GroupData & group, int level = 0);
+	static void toXML(const GroupData & group, pugi::xml_node & node);
 
 	// XML解析转换为GroupData类型
 	static GroupData toGroupData(const pugi::xml_node & node);
@@ -358,7 +378,7 @@ public:
 	 *      <time>20210713</time>
 	 * </request>
 	 ****************************************************************/
-	static std::string toXMLString(const RequestData & request, int level = 0);
+	static void toXML(const RequestData & request, pugi::xml_node & node);
 
 	// XML解析转换为RequestData类型
 	static RequestData toRequestData(const pugi::xml_node & node);
@@ -405,7 +425,7 @@ public:
 	MessageData(const uint64_t & id);
 
 	// 列表初始化构造函数
-	MessageData(const uint64_t & id, const DATA_TYPE& type, const char * from, const char * to, const uint64_t time, const char * data);
+	MessageData(const uint64_t & id, const DATA_TYPE& type, const char * from, /*const char * to, */const uint64_t& time, const char * data);
 
 	// 拷贝构造函数
 	MessageData(const MessageData& message);
@@ -434,10 +454,10 @@ public:
 	// 设置[发送账号]
 	inline void setFromId(const char * id) { strncpy(_from_id, id, sizeof(_from_id)); };
 
-	// 返回[接受账号][禁止修改]
-	inline const char * retToId(void) const { return _to_id; };
-	// 设置[接受账号]
-	inline void setToId(const char * id) { strncpy(_to_id, id, sizeof(_to_id)); };
+	// // 返回[接受账号][禁止修改]
+	// inline const char * retToId(void) const { return _to_id; };
+	// // 设置[接受账号]
+	// inline void setToId(const char * id) { strncpy(_to_id, id, sizeof(_to_id)); };
 
 	// 返回[发送时间][禁止修改]
 	inline uint64_t retTime(void) const { return _send_time; };
@@ -467,7 +487,7 @@ public:
 	 *      <data>./image/message_avatar/1.jpg</data>
 	 * </message>
 	 ****************************************************************/
-	static std::string toXMLString(const MessageData& message, int level = 0);
+	static void toXML(const MessageData& message, pugi::xml_node & node);
 
 	// XML解析转换为UserData类型
 	static MessageData toMessageData(const pugi::xml_node & node);
@@ -492,7 +512,7 @@ private:
 	uint64_t _message_id;                           // 消息id
 	DATA_TYPE _message_type;                        // 消息类型
 	char _from_id[ID_MAX];                          // 发送账号
-	char _to_id[ID_MAX];                            // 接受账号
+	// char _to_id[ID_MAX];                            // 接受账号
 	uint64_t _send_time;                            // 发送时间
 	char _message_data[MESSAGE_DATA_MAX];           // 发送文本
 
@@ -551,7 +571,7 @@ public:
 	 *      </user>
 	 * </firendlist>
 	 ****************************************************************/
-	static std::string friendListToXMLString(const UserList & friendlist, int level = 0);
+	static void friendListToXML(const UserList & friendlist, pugi::xml_node & node);
 
 	// XML解析转换为UserList类型
 	static UserList toFriendList(const pugi::xml_node & node);
@@ -563,7 +583,7 @@ public:
 	 *      </group>
 	 * </grouplist>
 	 ****************************************************************/
-	static std::string groupListToXMLString(const GroupList & grouplist, int level = 0);
+	static void groupListToXML(const GroupList & grouplist, pugi::xml_node & node);
 
 	// XML解析转换为UserList类型
 	static GroupList toGroupList(const pugi::xml_node & node);
@@ -579,7 +599,7 @@ public:
 	 *      </group>
 	 * <groupmemberslist>
 	 ****************************************************************/
-	static std::string groupMemberListToXMLString(const GroupMemberList & memberlist, int level = 0);
+	static void groupMemberListToXML(const GroupMemberList & memberlist, pugi::xml_node & node);
 
 	// XML解析转换为UserList类型
 	static GroupMemberList toGroupMemberList(const pugi::xml_node & node);
@@ -593,7 +613,7 @@ public:
 	 *      </request>
 	 * </requestlist>
 	 ****************************************************************/
-	static std::string friendRequestListToXMLString(const RequestList & requestlist, int level = 0);
+	static void friendRequestListToXML(const RequestList & requestlist, pugi::xml_node & node);
 
 	// XML解析转换为UserList类型
 	static RequestList toRequestList(const pugi::xml_node & node);
@@ -615,7 +635,7 @@ public:
 	 *      </user>
 	 *  </messagelist>
 	 ****************************************************************/
-	static std::string messageListToXMLString(const MessageList & messagelist, int level = 0);
+	static void messageListToXML(const MessageList & messagelist, pugi::xml_node & node);
 
 	// XML解析转换为UserList类型
 	static MessageList toMessageList(const pugi::xml_node & node);
@@ -637,7 +657,7 @@ public:
 	 *      </messagelist>
 	 *  </qq>
 	 ****************************************************************/
-	static std::string toXMLString(const DingDongData & data, int level = 0);
+	static void toXML(const DingDongData & data, pugi::xml_node & node);
 
 	// XML解析转换为UserList类型
 	static DingDongData toDingDongData(const pugi::xml_node & node);
