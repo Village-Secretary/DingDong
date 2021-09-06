@@ -56,6 +56,56 @@ bool ID::operator<(const ID& other) const
 }
 
 // 列表初始化构造函数
+UserPassward::UserPassward(const char * id, const char * passward)
+{
+	strncpy(_user_id, id, sizeof(_user_id));
+	strncpy(_user_passward, passward, sizeof(_user_passward));
+}
+
+// 拷贝构造函数
+UserPassward::UserPassward(const UserPassward & other)
+{
+	strncpy(_user_id, other._user_id, sizeof(_user_id));
+	strncpy(_user_passward, other._user_passward, sizeof(_user_passward));
+}
+
+// 赋值符号重载函数
+UserPassward & UserPassward::operator=(const UserPassward & other)
+{
+	strncpy(_user_id, other._user_id, sizeof(_user_id));
+	strncpy(_user_passward, other._user_passward, sizeof(_user_passward));
+
+	return *this;
+}
+
+// 等于运算符重载函数
+bool UserPassward::operator==(const UserPassward & other) const
+{
+	if (strcmp(_user_id, other._user_id) == 0) return true;
+	else return false;
+}
+
+void UserPassward::toXML(const UserPassward & user, pugi::xml_node & node)
+{
+	// 添加节点[data]
+	pugi::xml_node node_user = node.append_child("user");
+	// 添加属性
+	node_user.append_attribute("id") = user._user_id;
+
+	// 添加所有子节点
+	node_user.append_child("passward").append_child(pugi::node_pcdata).set_value(user._user_passward);
+}
+
+// XML解析转换为UserData类型
+UserPassward UserPassward::toLoginData(const pugi::xml_node & node)
+{
+	string id = node.attribute("id").value();
+	string passward = node.child_value("passward");
+
+	return UserPassward(id.c_str(), passward.c_str());
+}
+
+// 列表初始化构造函数
 UserData::UserData(const char * id, const char * name, const USER_SEX& sex, const char * avatar, const uint32_t& birth, const char * signature) : _user_sex(sex), _user_birth(birth)
 {
 	strncpy(_user_id, id, sizeof(_user_id));
@@ -515,7 +565,7 @@ MessageList DingDongData::toMessageList(const xml_node & node)
 void DingDongData::toXML(const DingDongData & data, pugi::xml_node & node)
 {
 	// 添加子节点
-	pugi::xml_node node_dd_data = node.append_child("ddData");
+	pugi::xml_node node_dd_data = node.append_child("DingDongData");
 
 	UserData::toXML(data._myself, node_dd_data);
 	DingDongData::friendListToXML(data._friends, node_dd_data);

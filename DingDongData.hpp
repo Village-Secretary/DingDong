@@ -8,33 +8,17 @@
 #include <map>
 #include <vector>
 
-constexpr uint32_t ID_MAX = 11 + 1;
-constexpr uint32_t USER_NAME_MAX = 35;
-constexpr uint32_t GROUP_NAME_MAX = 50;
-constexpr uint32_t USER_AVATAR_MAX = 120;
-constexpr uint32_t GROUP_AVATAR_MAX = 120;
-constexpr uint32_t USER_SIGNATURE_MAX = 150;
-constexpr uint32_t GROUP_INTRODUCTION_MAX = 255;
-constexpr uint32_t MESSAGE_DATA_MAX = 600;
-constexpr uint32_t VERIFY_MAX = 90;
+constexpr uint32_t ID_LENGTH = 11 + 1;
+constexpr uint32_t PASSWARD_LENGTH = 25;
+constexpr uint32_t USER_NAME_LENGTH = 35;
+constexpr uint32_t GROUP_NAME_LENGTH = 50;
+constexpr uint32_t USER_AVATAR_LENGTH = 120;
+constexpr uint32_t GROUP_AVATAR_LENGTH = 120;
+constexpr uint32_t USER_SIGNATURE_LENGTH = 150;
+constexpr uint32_t GROUP_INTRODUCTION_LENGTH = 255;
+constexpr uint32_t MESSAGE_DATA_LENGTH = 600;
+constexpr uint32_t VERIFY_LENGTH = 90;
 
-// constexpr const char * USER_ATTRIBUTES_ID = "id";
-// constexpr const char * USER_LABEL_NAME = "name";
-// constexpr const char * USER_LABEL_SEX = "sex";
-// constexpr const char * USER_LABEL_AVATAR = "avatar";
-// constexpr const char * USER_LABEL_BIRTH = "birth";
-// constexpr const char * USER_LABEL_SIGNATURE = "signature";
-
-// constexpr const char * GROUP_ATTRIBUTES_ID = "id";
-// constexpr const char * GROUP_LABEL_NAME = "name";
-// constexpr const char * GROUP_LABEL_AVATAR = "avatar";
-// constexpr const char * GROUP_LABEL_TIME = "time";
-// constexpr const char * GROUP_LABEL_INTRODUCTION = "introduction";
-// constexpr const char * GROUP_LABEL_OWNER = "owner";
-// constexpr const char * GROUP_LABEL_NUMBER = "number";
-
-// 设置标签的换行
-// std::string setLevel(int level);
 
 struct xml_string_writer : pugi::xml_writer
 {
@@ -111,10 +95,64 @@ public:
 
 private:
 
-	char _id[ID_MAX];       // ID
+	char _id[ID_LENGTH];       // ID
 	ID_TYPE _type;          // ID类型
 
 };
+
+
+// 登录
+class UserPassward {
+
+
+public:
+
+	// 显示默认构造函数
+	UserPassward(void) = default;
+
+	// 列表初始化构造函数
+	UserPassward(const char * id, const char * passward);
+
+	// 拷贝构造函数
+	UserPassward(const UserPassward & other);
+
+	// 赋值符号重载函数
+	UserPassward & operator=(const UserPassward & other);
+
+	// 显示默认析构函数
+	~UserPassward() = default;
+
+	// 等于运算符重载函数
+	bool operator==(const UserPassward & other) const;
+
+	// 返回[昵称][禁止修改]
+	inline const char * retId(void) const { return _user_id; };
+	// 设置[昵称]
+	inline void setId(const char * id) { std::strncpy(_user_id, id, sizeof(_user_id)); };
+
+	// 返回[昵称][禁止修改]
+	inline const char * retPassward(void) const { return _user_passward; };
+	// 设置[昵称]
+	inline void setPassward(const char * passward) { std::strncpy(_user_passward, passward, sizeof(_user_passward)); };
+
+	// 转换成XML格式
+	/****************************************************************
+	 * <login id="2248585019">
+	 *      <passward>12345678</passward>
+	 * </user>
+	 ****************************************************************/
+	static void toXML(const UserPassward & user, pugi::xml_node & node);
+
+	// XML解析转换为UserData类型
+	static UserPassward toLoginData(const pugi::xml_node & node);
+
+private:
+
+	char _user_id[ID_LENGTH];					// 账号
+	char _user_passward[PASSWARD_LENGTH];		// 密码
+
+};
+
 
 // 用户数据
 class UserData {
@@ -205,12 +243,12 @@ public:
 
 private:
 
-	char _user_id[ID_MAX];                          // 账号
-	char _user_name[USER_NAME_MAX];                 // 昵称
+	char _user_id[ID_LENGTH];                          // 账号
+	char _user_name[USER_NAME_LENGTH];                 // 昵称
 	USER_SEX _user_sex;                             // 性别
-	char _user_avatar[USER_AVATAR_MAX];             // 头像
+	char _user_avatar[USER_AVATAR_LENGTH];             // 头像
 	uint32_t _user_birth;                           // 生日
-	char _user_signature[USER_SIGNATURE_MAX];       // 个性签名
+	char _user_signature[USER_SIGNATURE_LENGTH];       // 个性签名
 
 	// 设置[账号]
 	inline void setId(const char * id) { std::strncpy(_user_id, id, sizeof(_user_id)); };
@@ -298,12 +336,12 @@ public:
 
 private:
 
-	char _group_id[ID_MAX];                                 // 群账号
-	char _group_name[GROUP_NAME_MAX];                       // 群名称
-	char _group_avatar[GROUP_AVATAR_MAX];                   // 群头像
+	char _group_id[ID_LENGTH];                                 // 群账号
+	char _group_name[GROUP_NAME_LENGTH];                       // 群名称
+	char _group_avatar[GROUP_AVATAR_LENGTH];                   // 群头像
 	uint32_t _group_time;                                   // 创建时间
-	char _group_introduction[GROUP_INTRODUCTION_MAX];       // 群介绍
-	char _group_owner[ID_MAX];                              // 群主
+	char _group_introduction[GROUP_INTRODUCTION_LENGTH];       // 群介绍
+	char _group_owner[ID_LENGTH];                              // 群主
 	uint32_t _group_number;                                 // 群人数
 
 };
@@ -404,7 +442,7 @@ private:
 	uint64_t _request_id;               // 请求id
 	ID _from_id;                        // 发送id
 	ID _to_id;                          // 接收id
-	char _verify_message[VERIFY_MAX];   // 验证信息
+	char _verify_message[VERIFY_LENGTH];   // 验证信息
 	REQUEST_STATUS _request_status;     // 是否处理
 	uint32_t _request_time;             // 发送时间
 
@@ -474,7 +512,6 @@ public:
 	 * 文本：
 	 * <message id="1278" type="text">
 	 *      <from>2248585019<from>
-	 *      <to>1961776643<to>
 	 *      <time>20210713</time>
 	 *      <data>hi~, my name is Romeo</data>
 	 * </message>
@@ -482,7 +519,6 @@ public:
 	 * 图片：
 	 * <message id="1278" type="image">
 	 *      <from>2248585019<from>
-	 *      <to>1961776643<to>
 	 *      <time>20210713</time>
 	 *      <data>./image/message_avatar/1.jpg</data>
 	 * </message>
@@ -511,10 +547,10 @@ private:
 
 	uint64_t _message_id;                           // 消息id
 	DATA_TYPE _message_type;                        // 消息类型
-	char _from_id[ID_MAX];                          // 发送账号
-	// char _to_id[ID_MAX];                            // 接受账号
+	char _from_id[ID_LENGTH];                          // 发送账号
+	// char _to_id[ID_LENGTH];                            // 接受账号
 	uint64_t _send_time;                            // 发送时间
-	char _message_data[MESSAGE_DATA_MAX];           // 发送文本
+	char _message_data[MESSAGE_DATA_LENGTH];           // 发送文本
 
 };
 
